@@ -22,38 +22,86 @@ import numpy as np
 
 
 class SimpleForwardTask(object):
-  """Default empy task."""
-  def __init__(self):
-    """Initializes the task."""
-    self.current_base_pos = np.zeros(3)
-    self.last_base_pos = np.zeros(3)
+    """Default empy task."""
 
-  def __call__(self, env):
-    return self.reward(env)
+    def __init__(self):
+        """Initializes the task."""
+        self.current_base_pos = np.zeros(3)
+        self.last_base_pos = np.zeros(3)
 
-  def reset(self, env):
-    """Resets the internal state of the task."""
-    self._env = env
-    self.last_base_pos = env.robot.GetBasePosition()
-    self.current_base_pos = self.last_base_pos
+    def __call__(self, env):
+        return self.reward(env)
 
-  def update(self, env):
-    """Updates the internal state of the task."""
-    self.last_base_pos = self.current_base_pos
-    self.current_base_pos = env.robot.GetBasePosition()
+    def reset(self, env):
+        """Resets the internal state of the task."""
+        self._env = env
+        self.last_base_pos = env.robot.GetBasePosition()
+        self.current_base_pos = self.last_base_pos
 
-  def done(self, env):
-    """Checks if the episode is over.
+    def update(self, env):
+        """Updates the internal state of the task."""
+        self.last_base_pos = self.current_base_pos
+        self.current_base_pos = env.robot.GetBasePosition()
+
+    def done(self, env):
+        """Checks if the episode is over.
 
        If the robot base becomes unstable (based on orientation), the episode
        terminates early.
     """
-    rot_quat = env.robot.GetBaseOrientation()
-    rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
-    return rot_mat[-1] < 0.85
+        rot_quat = env.robot.GetBaseOrientation()
+        rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
+        return rot_mat[-1] < 0.85
+
+    def reward(self, env):
+        """Get the reward without side effects."""
+        del env
+        return self.current_base_pos[0] - self.last_base_pos[0]
 
 
-  def reward(self, env):
-    """Get the reward without side effects."""
-    del env
-    return self.current_base_pos[0] - self.last_base_pos[0]
+class WalkingTask(object):
+    """Task to learn to walk in one direction"""
+
+    def __init__(self):
+        """Initializes the task."""
+        self.current_base_pos = np.zeros(3)
+        self.last_base_pos = np.zeros(3)
+
+        self.current_motor_angles = np.zeros(12)
+        self.last_motor_angles = np.zeros(12)
+
+    def __call__(self, env):
+        return self.reward(env)
+
+    def reset(self, env):
+        """Resets the internal state of the task."""
+        self._env = env
+        self.last_base_pos = env.robot.GetBasePosition()
+        self.current_base_pos = self.last_base_pos
+
+        self.last_motor_angles = env.robot.GetMotorAngles()
+        self.current_motor_angles = self.last_motor_angles
+
+    def update(self, env):
+        """Updates the internal state of the task."""
+        self.last_base_pos = self.current_base_pos
+        self.current_base_pos = env.robot.GetBasePosition()
+
+        self.last_motor_angles = self.last_motor_angles
+        self.current_motor_angles = env.robot.GetMotorAngles()
+
+    def done(self, env):
+        """Checks if the episode is over.
+
+       If the robot base becomes unstable (based on orientation), the episode
+       terminates early.
+    """
+        rot_quat = env.robot.GetBaseOrientation()
+        rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
+        return rot_mat[-1] < 0.85
+
+    def reward(self, env):
+        """Get the reward without side effects."""
+
+        del env
+        return self.current_base_pos[0] - self.last_base_pos[0] - np.absolute(self.last_motor_angles - self.current_motor_angles).sum()
