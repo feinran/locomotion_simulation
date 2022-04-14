@@ -7,7 +7,6 @@ def register(env_id, *args, **kvargs):
     if env_id in registry.env_specs:
         return
     else:
-        print("jajajakljkjjjaj", env_id)
         return gym.envs.registration.register(env_id, *args, **kvargs)
 
 
