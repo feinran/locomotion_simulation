@@ -10,8 +10,8 @@ def register(env_id, *args, **kvargs):
 
 
 register(
-    env_id='A1GymEnv-v1',
-    entry_point='locomotion.envs.gym_envs:A1GymEnv',
+    env_id='A1GymEnv-v2',
+    entry_point='locomotion_simulation.locomotion.envs.gym_envs:A1GymEnv',
     max_episode_steps=2000,
     reward_threshold=2000.0,
 )
