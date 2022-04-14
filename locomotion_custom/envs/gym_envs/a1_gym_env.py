@@ -26,18 +26,14 @@ class A1GymEnvCustom(gym.Env):
     def step(self, action):
         return self._env.step(action)
 
-
     def reset(self):
         return self._env.reset()
-
 
     def close(self):
         self._env.close()
 
-
     def render(self, mode):
         return self._env.render(mode)
-
 
     def __getattr__(self, attr):
         return getattr(self._env, attr)
