@@ -588,9 +588,9 @@ class Minitaur(object):
     def GetBasePosition(self):
         """Get the position of minitaur's base.
 
-    Returns:
-      The position of minitaur's base.
-    """
+        Returns:
+          The position of minitaur's base.
+        """
         return self._base_position
 
     def GetBaseVelocity(self):
@@ -698,10 +698,10 @@ class Minitaur(object):
     def GetFootContacts(self):
         """Get minitaur's foot contact situation with the ground.
 
-    Returns:
-      A list of 4 booleans. The ith boolean is True if leg i is in contact with
-      ground.
-    """
+        Returns:
+          A list of 4 booleans. The ith boolean is True if leg i is in contact with
+          ground.
+        """
         contacts = []
         for leg_idx in range(MINITAUR_NUM_MOTORS // 2):
             link_id_1 = self._foot_link_ids[leg_idx * 2]
@@ -746,12 +746,12 @@ class Minitaur(object):
     def GetMotorAngles(self):
         """Gets the eight motor angles.
 
-    This function mimicks the noisy sensor reading and adds latency. The motor
-    angles that are delayed, noise polluted, and mapped to [-pi, pi].
+        This function mimicks the noisy sensor reading and adds latency. The motor
+        angles that are delayed, noise polluted, and mapped to [-pi, pi].
 
-    Returns:
-      Motor angles polluted by noise and latency, mapped to [-pi, pi].
-    """
+        Returns:
+          Motor angles polluted by noise and latency, mapped to [-pi, pi].
+        """
         motor_angles = self._AddSensorNoise(
             np.array(self._control_observation[0:self.num_motors]),
             self._observation_noise_stdev[0])
@@ -760,9 +760,9 @@ class Minitaur(object):
     def GetTrueMotorVelocities(self):
         """Get the velocity of all eight motors.
 
-    Returns:
-      Velocities of all eight motors.
-    """
+        Returns:
+          Velocities of all eight motors.
+        """
         motor_velocities = [state[1] for state in self._joint_states]
 
         motor_velocities = np.multiply(motor_velocities, self._motor_direction)
@@ -771,10 +771,10 @@ class Minitaur(object):
     def GetMotorVelocities(self):
         """Get the velocity of all eight motors.
 
-    This function mimicks the noisy sensor reading and adds latency.
-    Returns:
-      Velocities of all eight motors polluted by noise and latency.
-    """
+        This function mimicks the noisy sensor reading and adds latency.
+        Returns:
+          Velocities of all eight motors polluted by noise and latency.
+        """
         return self._AddSensorNoise(
             np.array(self._control_observation[self.num_motors:2 *
                                                                self.num_motors]),
@@ -783,18 +783,18 @@ class Minitaur(object):
     def GetTrueMotorTorques(self):
         """Get the amount of torque the motors are exerting.
 
-    Returns:
-      Motor torques of all eight motors.
-    """
+        Returns:
+          Motor torques of all eight motors.
+        """
         return self._observed_motor_torques
 
     def GetMotorTorques(self):
         """Get the amount of torque the motors are exerting.
 
-    This function mimicks the noisy sensor reading and adds latency.
-    Returns:
-      Motor torques of all eight motors polluted by noise and latency.
-    """
+        This function mimicks the noisy sensor reading and adds latency.
+        Returns:
+          Motor torques of all eight motors polluted by noise and latency.
+        """
         return self._AddSensorNoise(
             np.array(self._control_observation[2 * self.num_motors:3 *
                                                                    self.num_motors]),
@@ -803,9 +803,9 @@ class Minitaur(object):
     def GetEnergyConsumptionPerControlStep(self):
         """Get the amount of energy used in last one time step.
 
-    Returns:
-      Energy Consumption based on motor velocities and torques (Nm^2/s).
-    """
+        Returns:
+          Energy Consumption based on motor velocities and torques (Nm^2/s).
+        """
         return np.abs(np.dot(
             self.GetMotorTorques(),
             self.GetMotorVelocities())) * self.time_step * self._action_repeat
@@ -813,27 +813,27 @@ class Minitaur(object):
     def GetTrueBaseOrientation(self):
         """Get the orientation of minitaur's base, represented as quaternion.
 
-    Returns:
-      The orientation of minitaur's base.
-    """
+        Returns:
+          The orientation of minitaur's base.
+        """
         return self._base_orientation
 
     def GetBaseOrientation(self):
         """Get the orientation of minitaur's base, represented as quaternion.
 
-    This function mimicks the noisy sensor reading and adds latency.
-    Returns:
-      The orientation of minitaur's base polluted by noise and latency.
-    """
+        This function mimicks the noisy sensor reading and adds latency.
+        Returns:
+          The orientation of minitaur's base polluted by noise and latency.
+        """
         return self._pybullet_client.getQuaternionFromEuler(
             self.GetBaseRollPitchYaw())
 
     def GetTrueBaseRollPitchYawRate(self):
         """Get the rate of orientation change of the minitaur's base in euler angle.
 
-    Returns:
-      rate of (roll, pitch, yaw) change of the minitaur's base.
-    """
+        Returns:
+          rate of (roll, pitch, yaw) change of the minitaur's base.
+        """
         angular_velocity = self._pybullet_client.getBaseVelocity(self.quadruped)[1]
         orientation = self.GetTrueBaseOrientation()
         return self.TransformAngularVelocityToLocalFrame(angular_velocity,
@@ -843,13 +843,13 @@ class Minitaur(object):
                                              orientation):
         """Transform the angular velocity from world frame to robot's frame.
 
-    Args:
-      angular_velocity: Angular velocity of the robot in world frame.
-      orientation: Orientation of the robot represented as a quaternion.
+        Args:
+          angular_velocity: Angular velocity of the robot in world frame.
+          orientation: Orientation of the robot represented as a quaternion.
 
-    Returns:
-      angular velocity of based on the given orientation.
-    """
+        Returns:
+          angular velocity of based on the given orientation.
+        """
         # Treat angular velocity as a position vector, then transform based on the
         # orientation given by dividing (or multiplying with inverse).
         # Get inverse quaternion assuming the vector is at 0,0,0 origin.
@@ -865,11 +865,11 @@ class Minitaur(object):
     def GetBaseRollPitchYawRate(self):
         """Get the rate of orientation change of the minitaur's base in euler angle.
 
-    This function mimicks the noisy sensor reading and adds latency.
-    Returns:
-      rate of (roll, pitch, yaw) change of the minitaur's base polluted by noise
-      and latency.
-    """
+        This function mimicks the noisy sensor reading and adds latency.
+        Returns:
+          rate of (roll, pitch, yaw) change of the minitaur's base polluted by noise
+          and latency.
+        """
         return self._AddSensorNoise(
             np.array(self._control_observation[3 * self.num_motors +
                                                4:3 * self.num_motors + 7]),
@@ -878,9 +878,9 @@ class Minitaur(object):
     def GetActionDimension(self):
         """Get the length of the action list.
 
-    Returns:
-      The length of the action list.
-    """
+        Returns:
+          The length of the action list.
+        """
         return self.num_motors
 
     def _ApplyOverheatProtection(self, actual_torque):
@@ -897,11 +897,11 @@ class Minitaur(object):
     def ApplyAction(self, motor_commands, motor_control_mode=None):
         """Apply the motor commands using the motor model.
 
-    Args:
-      motor_commands: np.array. Can be motor angles, torques, hybrid commands,
-        or motor pwms (for Minitaur only).
-      motor_control_mode: A MotorControlMode enum.
-    """
+        Args:
+          motor_commands: np.array. Can be motor angles, torques, hybrid commands,
+            or motor pwms (for Minitaur only).
+          motor_control_mode: A MotorControlMode enum.
+        """
         self.last_action_time = self._state_action_counter * self.time_step
         control_mode = motor_control_mode
 
@@ -1144,9 +1144,9 @@ class Minitaur(object):
     def ReceiveObservation(self):
         """Receive the observation from sensors.
 
-    This function is called once per step. The observations are only updated
-    when this function is called.
-    """
+        This function is called once per step. The observations are only updated
+        when this function is called.
+        """
         self._joint_states = self._pybullet_client.getJointStates(
             self.quadruped, self._motor_id_list)
         self._base_position, orientation = (
@@ -1165,12 +1165,12 @@ class Minitaur(object):
     def _GetDelayedObservation(self, latency):
         """Get observation that is delayed by the amount specified in latency.
 
-    Args:
-      latency: The latency (in seconds) of the delayed observation.
+        Args:
+          latency: The latency (in seconds) of the delayed observation.
 
-    Returns:
-      observation: The observation which was actually latency seconds ago.
-    """
+        Returns:
+          observation: The observation which was actually latency seconds ago.
+        """
         if latency <= 0 or len(self._observation_history) == 1:
             observation = self._observation_history[0]
         else:
@@ -1206,33 +1206,33 @@ class Minitaur(object):
     def SetControlLatency(self, latency):
         """Set the latency of the control loop.
 
-    It measures the duration between sending an action from Nvidia TX2 and
-    receiving the observation from microcontroller.
+        It measures the duration between sending an action from Nvidia TX2 and
+        receiving the observation from microcontroller.
 
-    Args:
-      latency: The latency (in seconds) of the control loop.
-    """
+        Args:
+          latency: The latency (in seconds) of the control loop.
+        """
         self._control_latency = latency
 
     def GetControlLatency(self):
         """Get the control latency.
 
-    Returns:
-      The latency (in seconds) between when the motor command is sent and when
-        the sensor measurements are reported back to the controller.
-    """
+        Returns:
+          The latency (in seconds) between when the motor command is sent and when
+            the sensor measurements are reported back to the controller.
+        """
         return self._control_latency
 
     def SetMotorGains(self, kp, kd):
         """Set the gains of all motors.
 
-    These gains are PD gains for motor positional control. kp is the
-    proportional gain and kd is the derivative gain.
+        These gains are PD gains for motor positional control. kp is the
+        proportional gain and kd is the derivative gain.
 
-    Args:
-      kp: proportional gain(s) of the motors.
-      kd: derivative gain(s) of the motors.
-    """
+        Args:
+          kp: proportional gain(s) of the motors.
+          kd: derivative gain(s) of the motors.
+        """
         if isinstance(kp, (collections.Sequence, np.ndarray)):
             self._motor_kps = np.asarray(kp)
         else:
@@ -1248,52 +1248,52 @@ class Minitaur(object):
     def GetMotorGains(self):
         """Get the gains of the motor.
 
-    Returns:
-      The proportional gain.
-      The derivative gain.
-    """
+        Returns:
+          The proportional gain.
+          The derivative gain.
+        """
         return self._motor_kps, self._motor_kds
 
     def GetMotorPositionGains(self):
         """Get the position gains of the motor.
 
-    Returns:
-      The proportional gain.
-    """
+        Returns:
+          The proportional gain.
+        """
         return self._motor_kps
 
     def GetMotorVelocityGains(self):
         """Get the velocity gains of the motor.
 
-    Returns:
-      The derivative gain.
-    """
+        Returns:
+          The derivative gain.
+        """
         return self._motor_kds
 
     def SetMotorStrengthRatio(self, ratio):
         """Set the strength of all motors relative to the default value.
 
-    Args:
-      ratio: The relative strength. A scalar range from 0.0 to 1.0.
-    """
+        Args:
+          ratio: The relative strength. A scalar range from 0.0 to 1.0.
+        """
         self._motor_model.set_strength_ratios([ratio] * self.num_motors)
 
     def SetMotorStrengthRatios(self, ratios):
         """Set the strength of each motor relative to the default value.
 
-    Args:
-      ratios: The relative strength. A numpy array ranging from 0.0 to 1.0.
-    """
+        Args:
+          ratios: The relative strength. A numpy array ranging from 0.0 to 1.0.
+        """
         self._motor_model.set_strength_ratios(ratios)
 
     def SetTimeSteps(self, action_repeat, simulation_step):
         """Set the time steps of the control and simulation.
 
-    Args:
-      action_repeat: The number of simulation steps that the same action is
-        repeated.
-      simulation_step: The simulation time step.
-    """
+        Args:
+          action_repeat: The number of simulation steps that the same action is
+            repeated.
+          simulation_step: The simulation time step.
+        """
         self.time_step = simulation_step
         self._action_repeat = action_repeat
 
@@ -1303,9 +1303,9 @@ class Minitaur(object):
     def _GetDefaultInitPosition(self):
         """Returns the init position of the robot.
 
-    It can be either 1) origin (INIT_POSITION), 2) origin with a rack
-    (INIT_RACK_POSITION), or 3) the previous position.
-    """
+        It can be either 1) origin (INIT_POSITION), 2) origin with a rack
+        (INIT_RACK_POSITION), or 3) the previous position.
+        """
         # If we want continuous resetting and is not the first episode.
         if self._reset_at_current_position and self._observation_history:
             x, y, _ = self.GetBasePosition()
@@ -1320,8 +1320,8 @@ class Minitaur(object):
     def _GetDefaultInitOrientation(self):
         """Returns the init position of the robot.
 
-    It can be either 1) INIT_ORIENTATION or 2) the previous rotation in yaw.
-    """
+        It can be either 1) INIT_ORIENTATION or 2) the previous rotation in yaw.
+        """
         # If we want continuous resetting and is not the first episode.
         if self._reset_at_current_position and self._observation_history:
             _, _, yaw = self.GetBaseRollPitchYaw()
@@ -1335,9 +1335,9 @@ class Minitaur(object):
     def SetAllSensors(self, sensors):
         """set all sensors to this robot and move the ownership to this robot.
 
-    Args:
-      sensors: a list of sensors to this robot.
-    """
+        Args:
+          sensors: a list of sensors to this robot.
+        """
         for s in sensors:
             s.set_robot(self)
         self._sensors = sensors
@@ -1345,22 +1345,22 @@ class Minitaur(object):
     def GetAllSensors(self):
         """get all sensors associated with this robot.
 
-    Returns:
-      sensors: a list of all sensors.
-    """
+        Returns:
+          sensors: a list of all sensors.
+        """
         return self._sensors
 
     def GetSensor(self, name):
         """get the first sensor with the given name.
 
-    This function return None if a sensor with the given name does not exist.
+        This function return None if a sensor with the given name does not exist.
 
-    Args:
-      name: the name of the sensor we are looking
+        Args:
+          name: the name of the sensor we are looking
 
-    Returns:
-      sensor: a sensor with the given name. None if not exists.
-    """
+        Returns:
+          sensor: a sensor with the given name. None if not exists.
+        """
         for s in self._sensors:
             if s.get_name() == name:
                 return s
@@ -1377,14 +1377,14 @@ class Minitaur(object):
     def ProcessAction(self, action, substep_count):
         """If enabled, interpolates between the current and previous actions.
 
-    Args:
-      action: current action.
-      substep_count: the step count should be between [0, self.__action_repeat).
+        Args:
+          action: current action.
+          substep_count: the step count should be between [0, self.__action_repeat).
 
-    Returns:
-      If interpolation is enabled, returns interpolated action depending on
-      the current action repeat substep.
-    """
+        Returns:
+          If interpolation is enabled, returns interpolated action depending on
+          the current action repeat substep.
+        """
         if self._enable_action_interpolation and self._last_action is not None:
             lerp = float(substep_count + 1) / self._action_repeat
             proc_action = self._last_action + lerp * (action - self._last_action)

@@ -171,9 +171,9 @@ class A1Robot(a1.A1):
     def ReceiveObservation(self):
         """Receives observation from robot.
 
-    Synchronous ReceiveObservation is not supported in A1,
-    so changging it to noop instead.
-    """
+        Synchronous ReceiveObservation is not supported in A1,
+        so changging it to noop instead.
+        """
         state = self._robot_interface.receive_observation()
         self._raw_state = state
         # Convert quaternion from wxyz to xyzw, which is default for Pybullet.
