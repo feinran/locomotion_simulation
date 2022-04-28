@@ -40,7 +40,7 @@ def build_regular_env(robot_class,
     sim_params.num_action_repeat = 10
     sim_params.enable_action_interpolation = False
     sim_params.enable_action_filter = False
-    sim_params.enable_clip_motor_commands = False
+    sim_params.enable_clip_motor_commands = True  # disable instant movement
     sim_params.robot_on_rack = on_rack
 
     gym_config = locomotion_gym_config.LocomotionGymConfig(
@@ -52,7 +52,7 @@ def build_regular_env(robot_class,
         robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
     ]
 
-    task = simple_forward_task.WalkingTask()
+    task = simple_forward_task.SimpleForwardTask()
 
     env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
                                               robot_class=robot_class,
