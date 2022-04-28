@@ -219,7 +219,8 @@ class LocomotionGymEnv(gym.Env):
 
             # Rebuild the world.
             self._world_dict = {
-                "ground": self._pybullet_client.loadURDF("plane_implicit.urdf")
+                "ground": self._pybullet_client.loadURDF("plane_implicit.urdf"),
+                "ball": self._pybullet_client.loadURDF("soccerball.urdf", [2, 0, 1])
             }
 
             # Rebuild the robot
@@ -338,19 +339,22 @@ class LocomotionGymEnv(gym.Env):
     def render(self, mode='rgb_array'):
         if mode != 'rgb_array':
             raise ValueError('Unsupported render mode:{}'.format(mode))
-        base_pos = self._robot.GetBasePosition()
-        view_matrix = self._pybullet_client.computeViewMatrixFromYawPitchRoll(
-            cameraTargetPosition=base_pos,
-            distance=self._camera_dist,
-            yaw=self._camera_yaw,
-            pitch=self._camera_pitch,
-            roll=0,
-            upAxisIndex=2)
+        base_pos = np.array(self._robot.GetBasePosition())
+        rpy = self._robot.GetTrueBaseRollPitchYaw()
+        p1 = (base_pos + np.array([0, 0, 0.2])).tolist()
+        p2 = (base_pos + 0.5 * np.array([np.cos(rpy[2]), np.sin(rpy[2]), np.sin(rpy[1])])).tolist()
+        view_matrix = self._pybullet_client.computeViewMatrix(
+            cameraEyePosition=p1,
+            cameraTargetPosition=p2,
+            cameraUpVector=[0, 0, 1]
+        )
         proj_matrix = self._pybullet_client.computeProjectionMatrixFOV(
             fov=60,
             aspect=float(self._render_width) / self._render_height,
             nearVal=0.1,
-            farVal=100.0)
+            farVal=2.0)
+
+        self._pybullet_client.addUserDebugLine(p1, p2, lineColorRGB=[0, 0, 1], lineWidth=2.0, lifeTime=0.01)
         (_, _, px, _, _) = self._pybullet_client.getCameraImage(
             width=self._render_width,
             height=self._render_height,
