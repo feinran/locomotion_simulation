@@ -19,21 +19,21 @@ import typing
 
 from locomotion_simulation.locomotion_custom.envs.sensors import sensor
 
-_ARRAY = typing.Iterable[float] # pylint:disable=invalid-name
-_FLOAT_OR_ARRAY = typing.Union[float, _ARRAY] # pylint:disable=invalid-name
-_DATATYPE_LIST = typing.Iterable[typing.Any] # pylint:disable=invalid-name
+_ARRAY = typing.Iterable[float]  # pylint:disable=invalid-name
+_FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint:disable=invalid-name
+_DATATYPE_LIST = typing.Iterable[typing.Any]  # pylint:disable=invalid-name
 
 
 class LastActionSensor(sensor.BoxSpaceSensor):
-  """A sensor that reports the last action taken."""
+    """A sensor that reports the last action taken."""
 
-  def __init__(self,
-               num_actions: int,
-               lower_bound: _FLOAT_OR_ARRAY = -1.0,
-               upper_bound: _FLOAT_OR_ARRAY = 1.0,
-               name: typing.Text = "LastAction",
-               dtype: typing.Type[typing.Any] = np.float64) -> None:
-    """Constructs LastActionSensor.
+    def __init__(self,
+                 num_actions: int,
+                 lower_bound: _FLOAT_OR_ARRAY = -1.0,
+                 upper_bound: _FLOAT_OR_ARRAY = 1.0,
+                 name: typing.Text = "LastAction",
+                 dtype: typing.Type[typing.Any] = np.float64) -> None:
+        """Constructs LastActionSensor.
 
     Args:
       num_actions: the number of actions to read
@@ -42,23 +42,67 @@ class LastActionSensor(sensor.BoxSpaceSensor):
       name: the name of the sensor
       dtype: data type of sensor value
     """
-    self._num_actions = num_actions
-    self._env = None
+        self._num_actions = num_actions
+        self._env = None
 
-    super(LastActionSensor, self).__init__(name=name,
-                                           shape=(self._num_actions,),
-                                           lower_bound=lower_bound,
-                                           upper_bound=upper_bound,
-                                           dtype=dtype)
+        super(LastActionSensor, self).__init__(name=name,
+                                               shape=(self._num_actions,),
+                                               lower_bound=lower_bound,
+                                               upper_bound=upper_bound,
+                                               dtype=dtype)
 
-  def on_reset(self, env):
-    """From the callback, the sensor remembers the environment.
+    def on_reset(self, env):
+        """From the callback, the sensor remembers the environment.
 
     Args:
       env: the environment who invokes this callback function.
     """
-    self._env = env
+        self._env = env
 
-  def _get_observation(self) -> _ARRAY:
-    """Returns the last action of the environment."""
-    return self._env.last_action
+    def _get_observation(self) -> _ARRAY:
+        """Returns the last action of the environment."""
+        return self._env.last_action
+
+
+class CameraArray(sensor.BoxSpaceSensor):
+    """sensor that represents the front cameras"""
+
+    def __init__(self,
+                 num_actions: int,
+                 lower_bound: _FLOAT_OR_ARRAY = -1.0,
+                 upper_bound: _FLOAT_OR_ARRAY = 1.0,
+                 name: typing.Text = "CameraArray",
+                 dtype: typing.Type[typing.Any] = np.float64) -> None:
+        """Constructs camera array sensor.
+
+        Args:
+          num_actions: the number of actions to read
+          lower_bound: the lower bound of the actions
+          upper_bound: the upper bound of the actions
+          name: the name of the sensor
+          dtype: data type of sensor value
+        """
+        self._num_actions = num_actions
+        self._env = None
+
+        super(CameraArray, self).__init__(name=name,
+                                          shape=(self._num_actions,),
+                                          lower_bound=lower_bound,
+                                          upper_bound=upper_bound,
+                                          dtype=dtype)
+
+    def on_reset(self, env):
+        """From the callback, the sensor remembers the environment.
+
+        Args:
+          env: the environment who invokes this callback function.
+        """
+        self._env = env
+
+    def _get_observation(self) -> _ARRAY:
+        """Returns 3 images from the front of the robot
+        - rgb
+        - depth
+        - segmentation
+        """
+        return self._env.render('rgb_array')
