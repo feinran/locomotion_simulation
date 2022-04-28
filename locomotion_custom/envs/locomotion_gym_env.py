@@ -14,6 +14,7 @@
 # limitations under the License.
 """This file implements the locomotion gym env."""
 import collections
+import math
 import time
 import gym
 from gym import spaces
@@ -22,6 +23,8 @@ import numpy as np
 import pybullet  # pytype: disable=import-error
 import pybullet_utils.bullet_client as bullet_client
 import pybullet_data as pd
+
+from scipy.spatial.transform import Rotation
 
 from locomotion_simulation.locomotion_custom.robots import robot_config
 from locomotion_simulation.locomotion_custom.envs.sensors import sensor
@@ -339,24 +342,52 @@ class LocomotionGymEnv(gym.Env):
     def render(self, mode='rgb_array'):
         if mode != 'rgb_array':
             raise ValueError('Unsupported render mode:{}'.format(mode))
+
         base_pos = np.array(self._robot.GetBasePosition())
-        rpy = self._robot.GetTrueBaseRollPitchYaw()
-        p1 = (base_pos + np.array([0, 0, 0.2])).tolist()
-        p2 = (base_pos + 0.5 * np.array([np.cos(rpy[2]), np.sin(rpy[2]), np.sin(rpy[1])])).tolist()
+
+        quaternion_orientation = self._robot.GetTrueBaseOrientation()
+        # calculate rotation matrix
+        M = Rotation.from_quat(quaternion_orientation)
+        M = M.as_matrix()
+
+        camera_eye_position = (base_pos + M.T[2] * 0.2).tolist()  #TODO take measurement from real robot
+        camera_target_position = camera_eye_position + M.T[0]  # is relative to cam pos
+        camera_up_vector = M.T[2]  # is a global vector
+
+        # draw robot coordinate system
+        # x-axis
+        self._pybullet_client.addUserDebugLine(
+            base_pos,
+            M.T[0] + base_pos,
+            lineColorRGB=[1, 0, 0],
+            lineWidth=2.0,
+            lifeTime=0.005)
+        # y-axis
+        self._pybullet_client.addUserDebugLine(
+            base_pos,
+            M.T[1] + base_pos,
+            lineColorRGB=[0, 1, 0],
+            lineWidth=2.0,
+            lifeTime=0.005)
+        # z-axis
+        self._pybullet_client.addUserDebugLine(
+            base_pos,
+            M.T[2] + base_pos,
+            lineColorRGB=[0, 0, 1],
+            lineWidth=2.0,
+            lifeTime=0.005)
+
         view_matrix = self._pybullet_client.computeViewMatrix(
-            cameraEyePosition=p1,
-            cameraTargetPosition=p2,
-            cameraUpVector=[0, 0, 1]
+            cameraEyePosition=camera_eye_position,
+            cameraTargetPosition=camera_target_position,
+            cameraUpVector=camera_up_vector
         )
         proj_matrix = self._pybullet_client.computeProjectionMatrixFOV(
             fov=60,
             aspect=float(self._render_width) / self._render_height,
             nearVal=0.1,
-            farVal=2.0)
-
-        self._pybullet_client.addUserDebugLine(p1, p2, lineColorRGB=[0, 0, 1], lineWidth=2.0, lifeTime=0.01)
-        (_, _, px, _, _) = self._pybullet_client.getCameraImage(
             farVal=100.0)
+
         (_, _, px, depth_img, _) = self._pybullet_client.getCameraImage(
             width=self._render_width,
             height=self._render_height,
