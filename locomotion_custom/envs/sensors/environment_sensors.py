@@ -86,12 +86,12 @@ class CameraArray(sensor.BoxSpaceSensor):
         self._env = None
 
         # render shapes for the camera
-        self.render_height = 100  # TODO: into config, check for memory consumption on cluster
-        self.render_with = 100  # TODO: into config
+        self.render_height = 360  # TODO: into config, check for memory consumption on cluster
+        self.render_with = 480  # TODO: into config
 
         # Warning is caused by typing from Box Space Sensor shape
         super(CameraArray, self).__init__(name=name,
-                                          shape=(3, self.render_height, self.render_with, 3),
+                                          shape=(self.render_height, self.render_with, 5),
                                           lower_bound=lower_bound,
                                           upper_bound=upper_bound,
                                           dtype=dtype)
@@ -151,7 +151,17 @@ class CameraArray(sensor.BoxSpaceSensor):
         rgb_array = np.array(px)
         rgb_array = rgb_array[:, :, :3]
 
-        depth_array = self.convert_gray2rgb(np.array(depth_img))
-        seg_array = self.convert_gray2rgb(np.array(seg_img))
+        depth_array = np.array(depth_img)
+        seg_array = np.array(seg_img)
 
-        return np.array([rgb_array, depth_array, seg_array])
+        # pack both arrays into one 5 dimensional image
+        # dimension 0 to 2: rgb_array
+        # dimension 3: depth_array
+        # dimension 4: seg_array
+        width, height = depth_array.shape
+        out = np.empty((width, height, 5), dtype=np.uint8)
+        out[:, :, :3] = rgb_array
+        out[:, :, 3] = depth_array
+        out[:, :, 4] = seg_array
+
+        return out
