@@ -388,7 +388,7 @@ class LocomotionGymEnv(gym.Env):
             nearVal=0.1,
             farVal=100.0)
 
-        (_, _, px, depth_img, _) = self._pybullet_client.getCameraImage(
+        (_, _, px, _, _) = self._pybullet_client.getCameraImage(
             width=self._render_width,
             height=self._render_height,
             renderer=self._pybullet_client.ER_BULLET_HARDWARE_OPENGL,
@@ -397,6 +397,7 @@ class LocomotionGymEnv(gym.Env):
 
         rgb_array = np.array(px)
         rgb_array = rgb_array[:, :, :3]
+
         return rgb_array
 
     def get_ground(self):
