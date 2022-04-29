@@ -67,6 +67,8 @@ def build_regular_env(robot_class,
         CameraArray()
     ]
 
+    # env_sensors = None
+
     env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
                                               robot_class=robot_class,
                                               env_sensors=env_sensors,
