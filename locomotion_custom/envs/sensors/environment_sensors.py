@@ -17,6 +17,8 @@
 import numpy as np
 import typing
 
+from scipy.spatial.transform import Rotation
+
 from locomotion_simulation.locomotion_custom.envs.sensors import sensor
 
 _ARRAY = typing.Iterable[float]  # pylint:disable=invalid-name
@@ -68,9 +70,8 @@ class CameraArray(sensor.BoxSpaceSensor):
     """sensor that represents the front cameras"""
 
     def __init__(self,
-                 num_actions: int,
-                 lower_bound: _FLOAT_OR_ARRAY = -1.0,
-                 upper_bound: _FLOAT_OR_ARRAY = 1.0,
+                 lower_bound: _FLOAT_OR_ARRAY = 0,
+                 upper_bound: _FLOAT_OR_ARRAY = 255,
                  name: typing.Text = "CameraArray",
                  dtype: typing.Type[typing.Any] = np.float64) -> None:
         """Constructs camera array sensor.
@@ -82,11 +83,15 @@ class CameraArray(sensor.BoxSpaceSensor):
           name: the name of the sensor
           dtype: data type of sensor value
         """
-        self._num_actions = num_actions
         self._env = None
 
+        # render shapes for the camera
+        self.render_height = 100  # TODO: into config, check for memory consumption on cluster
+        self.render_with = 100  # TODO: into config
+
+        # Warning is caused by typing from Box Space Sensor shape
         super(CameraArray, self).__init__(name=name,
-                                          shape=(self._num_actions,),
+                                          shape=(3, self.render_height, self.render_with, 3),
                                           lower_bound=lower_bound,
                                           upper_bound=upper_bound,
                                           dtype=dtype)
@@ -99,10 +104,54 @@ class CameraArray(sensor.BoxSpaceSensor):
         """
         self._env = env
 
+    @staticmethod
+    def convert_gray2rgb(image_array):
+        width, height = image_array.shape
+        out = np.empty((width, height, 3), dtype=np.uint8)
+        out[:, :, 0] = image_array
+        out[:, :, 1] = image_array
+        out[:, :, 2] = image_array
+        return out
+
     def _get_observation(self) -> _ARRAY:
         """Returns 3 images from the front of the robot
         - rgb
         - depth
         - segmentation
         """
-        return self._env.render('rgb_array')
+        base_pos = np.array(self._env._robot.GetBasePosition())
+
+        quaternion_orientation = self._env._robot.GetTrueBaseOrientation()
+        # calculate rotation matrix
+        M = Rotation.from_quat(quaternion_orientation)
+        M = M.as_matrix()
+
+        camera_eye_position = (base_pos + M.T[2] * 0.2).tolist()  # TODO take measurement from real robot
+        camera_target_position = camera_eye_position + M.T[0]  # is relative to cam pos
+        camera_up_vector = M.T[2]  # is a global vector
+
+        view_matrix = self._env._pybullet_client.computeViewMatrix(
+            cameraEyePosition=camera_eye_position,
+            cameraTargetPosition=camera_target_position,
+            cameraUpVector=camera_up_vector
+        )
+        proj_matrix = self._env._pybullet_client.computeProjectionMatrixFOV(
+            fov=60,
+            aspect=float(self._env._render_width) / self._env._render_height,
+            nearVal=0.1,
+            farVal=100.0)
+
+        (_, _, px, depth_img, seg_img) = self._env._pybullet_client.getCameraImage(
+            width=self.render_with,
+            height=self.render_height,
+            renderer=self._env._pybullet_client.ER_BULLET_HARDWARE_OPENGL,
+            viewMatrix=view_matrix,
+            projectionMatrix=proj_matrix)
+
+        rgb_array = np.array(px)
+        rgb_array = rgb_array[:, :, :3]
+
+        depth_array = self.convert_gray2rgb(np.array(depth_img))
+        seg_array = self.convert_gray2rgb(np.array(seg_img))
+
+        return np.array([rgb_array, depth_array, seg_array])

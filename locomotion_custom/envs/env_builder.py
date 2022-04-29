@@ -21,6 +21,8 @@ from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
     trajectory_generator_wrapper_env
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import simple_openloop
 from locomotion_simulation.locomotion_custom.envs.sensors import robot_sensors
+from locomotion_simulation.locomotion_custom.envs.sensors.environment_sensors import \
+    CameraArray
 from locomotion_simulation.locomotion_custom.robots import a1
 from locomotion_simulation.locomotion_custom.robots import laikago
 from locomotion_simulation.locomotion_custom.robots import robot_config
@@ -61,8 +63,13 @@ def build_regular_env(robot_class,
 
     task = dict(getmembers(custom_tasks, isclass))[task_name]()
 
+    env_sensors = [
+        CameraArray()
+    ]
+
     env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
                                               robot_class=robot_class,
+                                              env_sensors=env_sensors,
                                               robot_sensors=sensors,
                                               task=task)
 
