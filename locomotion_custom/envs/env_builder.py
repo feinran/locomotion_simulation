@@ -20,19 +20,26 @@ from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
     trajectory_generator_wrapper_env
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import simple_openloop
-from locomotion_simulation.locomotion_custom.envs.env_wrappers import simple_forward_task
 from locomotion_simulation.locomotion_custom.envs.sensors import robot_sensors
 from locomotion_simulation.locomotion_custom.robots import a1
 from locomotion_simulation.locomotion_custom.robots import laikago
 from locomotion_simulation.locomotion_custom.robots import robot_config
 
 
+from locomotion_simulation.locomotion_custom.envs import custom_tasks
+from inspect import getmembers, isclass
+from sacred_experiement import ex
+
+
+@ex.capture(prefix="env_config")
 def build_regular_env(robot_class,
                       motor_control_mode,
+                      task_name,
                       enable_rendering=False,
                       on_rack=False,
                       action_limit=(0.75, 0.75, 0.75),
                       wrap_trajectory_generator=True):
+
     sim_params = locomotion_gym_config.SimulationParameters()
     sim_params.enable_rendering = enable_rendering
     sim_params.motor_control_mode = motor_control_mode
@@ -52,7 +59,7 @@ def build_regular_env(robot_class,
         robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
     ]
 
-    task = simple_forward_task.SimpleForwardTask()
+    task = dict(getmembers(custom_tasks, isclass))[task_name]()
 
     env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
                                               robot_class=robot_class,
