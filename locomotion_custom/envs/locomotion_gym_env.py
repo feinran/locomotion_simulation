@@ -222,8 +222,9 @@ class LocomotionGymEnv(gym.Env):
 
             # Rebuild the world.
             self._world_dict = {
-                "ground": self._pybullet_client.loadURDF("plane_implicit.urdf"),
-                "ball": self._pybullet_client.loadURDF("soccerball.urdf", [2, 0, 1])
+                "hills": self._pybullet_client.loadURDF("hilly_1.urdf", [0, 0, -10]),
+                # "ground": self._pybullet_client.loadURDF("plane_implicit.urdf", [0, 0, 0]),
+                # "ball": self._pybullet_client.loadURDF("soccerball.urdf", [1, 0, 2])
             }
 
             # Rebuild the robot
@@ -350,7 +351,8 @@ class LocomotionGymEnv(gym.Env):
         M = Rotation.from_quat(quaternion_orientation)
         M = M.as_matrix()
 
-        camera_eye_position = (base_pos + M.T[2] * 0.2).tolist()  #TODO take measurement from real robot
+        camera_eye_position = (base_pos + M.T[
+            2] * 0.2).tolist()  # TODO take measurement from real robot
         camera_target_position = camera_eye_position + M.T[0]  # is relative to cam pos
         camera_up_vector = M.T[2]  # is a global vector
 
