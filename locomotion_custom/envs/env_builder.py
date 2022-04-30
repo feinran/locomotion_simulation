@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utilities for building environments."""
+import sacred.utils
+
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_env
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_config
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
@@ -67,7 +69,7 @@ def build_regular_env(robot_class,
         CameraArray()
     ]
 
-    # env_sensors = None
+    env_sensors = None
 
     env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
                                               robot_class=robot_class,
