@@ -242,11 +242,11 @@ class A1Robot(a1.A1):
     def ApplyAction(self, motor_commands, motor_control_mode=None):
         """Clips and then apply the motor commands using the motor model.
 
-    Args:
-      motor_commands: np.array. Can be motor angles, torques, hybrid commands,
-        or motor pwms (for Minitaur only).
-      motor_control_mode: A MotorControlMode enum.
-    """
+        Args:
+        motor_commands: np.array. Can be motor angles, torques, hybrid commands,
+            or motor pwms (for Minitaur only).
+        motor_control_mode: A MotorControlMode enum.
+        """
         if motor_control_mode is None:
             motor_control_mode = self._motor_control_mode
 

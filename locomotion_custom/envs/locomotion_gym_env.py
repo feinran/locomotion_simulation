@@ -51,22 +51,22 @@ class LocomotionGymEnv(gym.Env):
                  env_randomizers=None):
         """Initializes the locomotion gym environment.
 
-    Args:
-      gym_config: An instance of LocomotionGymConfig.
-      robot_class: A class of a robot. We provide a class rather than an
-        instance due to hard_reset functionality. Parameters are expected to be
-        configured with gin.
-      sensors: A list of environmental sensors for observation.
-      task: A callable function/class to calculate the reward and termination
-        condition. Takes the gym env as the argument when calling.
-      env_randomizers: A list of EnvRandomizer(s). An EnvRandomizer may
-        randomize the physical property of minitaur, change the terrrain during
-        reset(), or add perturbation forces during step().
+        Args:
+        gym_config: An instance of LocomotionGymConfig.
+        robot_class: A class of a robot. We provide a class rather than an
+            instance due to hard_reset functionality. Parameters are expected to be
+            configured with gin.
+        sensors: A list of environmental sensors for observation.
+        task: A callable function/class to calculate the reward and termination
+            condition. Takes the gym env as the argument when calling.
+        env_randomizers: A list of EnvRandomizer(s). An EnvRandomizer may
+            randomize the physical property of minitaur, change the terrrain during
+            reset(), or add perturbation forces during step().
 
-    Raises:
-      ValueError: If the num_action_repeat is less than 1.
+        Raises:
+        ValueError: If the num_action_repeat is less than 1.
 
-    """
+        """
 
         self.seed()
         self._gym_config = gym_config
