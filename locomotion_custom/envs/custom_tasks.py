@@ -36,11 +36,13 @@ class BaseTask():
         self._env = env
         self.last_base_pos = env.robot.GetBasePosition()
         self.current_base_pos = self.last_base_pos
+        self.energy_consumption = 0
 
     def update(self, env):
         """Updates the internal state of the task."""
         self.last_base_pos = self.current_base_pos
         self.current_base_pos = env.robot.GetBasePosition()
+        self.energy_consumption = env.robot.GetEnergyConsumptionPerControlStep()
 
     def done(self, env):
         """Checks if the episode is over.
@@ -49,11 +51,11 @@ class BaseTask():
         terminates early.
         """
         rot_quat = env.robot.GetBaseOrientation()
-        rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
+        self.rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
         
-        return rot_mat[-1] < 0.85
+        return self.rot_mat[-1] < 0.85
 
     def reward(self, env):
         """Get the reward without side effects."""
         del env
-        return self.current_base_pos[0] - self.last_base_pos[0]
+        return self.current_base_pos[0] - self.last_base_pos[0] + self.rot_mat[-1] - self.energy_consumption
