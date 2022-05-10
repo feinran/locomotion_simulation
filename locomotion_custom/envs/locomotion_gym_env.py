@@ -222,7 +222,8 @@ class LocomotionGymEnv(gym.Env):
 
             # Rebuild the world.
             self._world_dict = {
-                "hills": self._pybullet_client.loadURDF("env_meshes/hilly_2.urdf", [0, 0, 0]),
+                "hills": self._pybullet_client.loadURDF("env_meshes/hilly_1.urdf", [0, 0, 0]),
+                # "blocks": self._pybullet_client.loadURDF("env_meshes/blocky_1.urdf", [0, 0, 0]),
                 # "samurai": self._pybullet_client.loadURDF("samurai.urdf", [0, 0, 0]),
                 # "ground": self._pybullet_client.loadURDF("plane_implicit.urdf", [0, 0, 0]),
                 # "ball": self._pybullet_client.loadURDF("soccerball.urdf", [1, 0, 2])
