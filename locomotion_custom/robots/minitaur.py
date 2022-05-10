@@ -105,53 +105,53 @@ class Minitaur(object):
                  reset_time=-1):
         """Constructs a minitaur and reset it to the initial states.
 
-    Args:
-      pybullet_client: The instance of BulletClient to manage different
-        simulations.
-      num_motors: The number of the motors on the robot.
-      dofs_per_leg: The number of degrees of freedom for each leg.
-      time_step: The time step of the simulation.
-      action_repeat: The number of ApplyAction() for each control step.
-      self_collision_enabled: Whether to enable self collision.
-      motor_control_mode: Enum. Can either be POSITION, TORQUE, or HYBRID.
-      motor_model_class: We can choose from simple pd model to more accureate DC
-        motor models.
-      motor_kp: proportional gain for the motors.
-      motor_kd: derivative gain for the motors.
-      motor_torque_limits: Torque limits for the motors. Can be a single float
-        or a list of floats specifying different limits for different robots. If
-        not provided, the default limit of the robot is used.
-      pd_latency: The latency of the observations (in seconds) used to calculate
-        PD control. On the real hardware, it is the latency between the
-        microcontroller and the motor controller.
-      control_latency: The latency of the observations (in second) used to
-        calculate action. On the real hardware, it is the latency from the motor
-        controller, the microcontroller to the host (Nvidia TX2).
-      observation_noise_stdev: The standard deviation of a Gaussian noise model
-        for the sensor. It should be an array for separate sensors in the
-        following order [motor_angle, motor_velocity, motor_torque,
-        base_roll_pitch_yaw, base_angular_velocity]
-      motor_overheat_protection: Whether to shutdown the motor that has exerted
-        large torque (OVERHEAT_SHUTDOWN_TORQUE) for an extended amount of time
-        (OVERHEAT_SHUTDOWN_TIME). See ApplyAction() in minitaur.py for more
-        details.
-      motor_direction: A list of direction values, either 1 or -1, to compensate
-        the axis difference of motors between the simulation and the real robot.
-      motor_offset: A list of offset value for the motor angles. This is used to
-        compensate the angle difference between the simulation and the real
-        robot.
-      on_rack: Whether to place the minitaur on rack. This is only used to debug
-        the walking gait. In this mode, the minitaur's base is hanged midair so
-        that its walking gait is clearer to visualize.
-      reset_at_current_position: Whether to reset the minitaur at the current
-        position and orientation. This is for simulating the reset behavior in
-        the real world.
-      sensors: a list of sensors that are attached to the robot.
-      enable_action_interpolation: Whether to interpolate the current action
-        with the previous action in order to produce smoother motions
-      enable_action_filter: Boolean specifying if a lowpass filter should be
-        used to smooth actions.
-    """
+        Args:
+          pybullet_client: The instance of BulletClient to manage different
+            simulations.
+          num_motors: The number of the motors on the robot.
+          dofs_per_leg: The number of degrees of freedom for each leg.
+          time_step: The time step of the simulation.
+          action_repeat: The number of ApplyAction() for each control step.
+          self_collision_enabled: Whether to enable self collision.
+          motor_control_mode: Enum. Can either be POSITION, TORQUE, or HYBRID.
+          motor_model_class: We can choose from simple pd model to more accureate DC
+            motor models.
+          motor_kp: proportional gain for the motors.
+          motor_kd: derivative gain for the motors.
+          motor_torque_limits: Torque limits for the motors. Can be a single float
+            or a list of floats specifying different limits for different robots. If
+            not provided, the default limit of the robot is used.
+          pd_latency: The latency of the observations (in seconds) used to calculate
+            PD control. On the real hardware, it is the latency between the
+            microcontroller and the motor controller.
+          control_latency: The latency of the observations (in second) used to
+            calculate action. On the real hardware, it is the latency from the motor
+            controller, the microcontroller to the host (Nvidia TX2).
+          observation_noise_stdev: The standard deviation of a Gaussian noise model
+            for the sensor. It should be an array for separate sensors in the
+            following order [motor_angle, motor_velocity, motor_torque,
+            base_roll_pitch_yaw, base_angular_velocity]
+          motor_overheat_protection: Whether to shutdown the motor that has exerted
+            large torque (OVERHEAT_SHUTDOWN_TORQUE) for an extended amount of time
+            (OVERHEAT_SHUTDOWN_TIME). See ApplyAction() in minitaur.py for more
+            details.
+          motor_direction: A list of direction values, either 1 or -1, to compensate
+            the axis difference of motors between the simulation and the real robot.
+          motor_offset: A list of offset value for the motor angles. This is used to
+            compensate the angle difference between the simulation and the real
+            robot.
+          on_rack: Whether to place the minitaur on rack. This is only used to debug
+            the walking gait. In this mode, the minitaur's base is hanged midair so
+            that its walking gait is clearer to visualize.
+          reset_at_current_position: Whether to reset the minitaur at the current
+            position and orientation. This is for simulating the reset behavior in
+            the real world.
+          sensors: a list of sensors that are attached to the robot.
+          enable_action_interpolation: Whether to interpolate the current action
+            with the previous action in order to produce smoother motions
+          enable_action_filter: Boolean specifying if a lowpass filter should be
+            used to smooth actions.
+        """
 
         self.num_motors = num_motors
         self.num_legs = self.num_motors // dofs_per_leg
