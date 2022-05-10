@@ -21,7 +21,7 @@ from __future__ import print_function
 import numpy as np
 
 class BaseTask():
-    """Default empy task."""
+    """Default task."""
 
     def __init__(self):
         """Initializes the task."""
@@ -36,13 +36,11 @@ class BaseTask():
         self._env = env
         self.last_base_pos = env.robot.GetBasePosition()
         self.current_base_pos = self.last_base_pos
-        self.energy_consumption = 0
 
     def update(self, env):
         """Updates the internal state of the task."""
         self.last_base_pos = self.current_base_pos
         self.current_base_pos = env.robot.GetBasePosition()
-        self.energy_consumption = env.robot.GetEnergyConsumptionPerControlStep()
 
     def done(self, env):
         """Checks if the episode is over.
@@ -51,9 +49,25 @@ class BaseTask():
         terminates early.
         """
         rot_quat = env.robot.GetBaseOrientation()
-        self.rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
+        rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
         
-        return self.rot_mat[-1] < 0.85
+        return rot_mat[-1] < 0.85
+
+    def reward(self, env):
+        """Get the reward without side effects."""
+        del env
+        return self.current_base_pos[0] - self.last_base_pos[0]
+
+
+class EnergyTask(BaseTask):
+    """Penalize energy consumption"""
+    def reset(self, env):
+        super().reset()
+        self.energy_consumption = 0
+
+    def update(self, env):
+        super().update()
+        self.energy_consumption = env.robot.GetEnergyConsumptionPerControlStep()
 
     def reward(self, env):
         """Get the reward without side effects."""
