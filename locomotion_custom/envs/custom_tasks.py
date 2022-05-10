@@ -72,4 +72,8 @@ class EnergyTask(BaseTask):
     def reward(self, env):
         """Get the reward without side effects."""
         del env
-        return self.current_base_pos[0] - self.last_base_pos[0] + self.rot_mat[-1] - self.energy_consumption
+        # print(self.current_base_pos[0] - self.last_base_pos[0])
+        # print(self.energy_consumption * 0.01)
+        # print(self.current_base_pos[0] - self.last_base_pos[0] - self.energy_consumption * 0.01)
+        # print("_______")
+        return self.current_base_pos[0] - self.last_base_pos[0] - self.energy_consumption
