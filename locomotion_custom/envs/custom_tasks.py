@@ -62,11 +62,11 @@ class BaseTask():
 class EnergyTask(BaseTask):
     """Penalize energy consumption"""
     def reset(self, env):
-        super().reset()
+        super().reset(env)
         self.energy_consumption = 0
 
     def update(self, env):
-        super().update()
+        super().update(env)
         self.energy_consumption = env.robot.GetEnergyConsumptionPerControlStep()
 
     def reward(self, env):
