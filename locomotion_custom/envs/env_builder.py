@@ -24,7 +24,7 @@ from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import simple_openloop
 from locomotion_simulation.locomotion_custom.envs.sensors import robot_sensors
 from locomotion_simulation.locomotion_custom.envs.sensors.environment_sensors import \
-    CameraArray
+    CameraArray, DirectionSensor
 from locomotion_simulation.locomotion_custom.robots import a1
 from locomotion_simulation.locomotion_custom.robots import laikago
 from locomotion_simulation.locomotion_custom.robots import robot_config
@@ -45,9 +45,9 @@ def build_regular_env(robot_class,
     task_name = "DirectionTask"
 
     env_sensors = [
-        CameraArray()
+        # CameraArray(),
+        DirectionSensor(),
     ]
-    env_sensors = None
 
 
     sim_params = locomotion_gym_config.SimulationParameters()

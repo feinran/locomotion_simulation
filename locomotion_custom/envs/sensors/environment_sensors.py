@@ -187,7 +187,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         self._env = None
 
         super().__init__(name=name,
-                        shape=(self._num_actions,),
+                        shape=(2,),
                         lower_bound=lower_bound,
                         upper_bound=upper_bound,
                         dtype=dtype)
