@@ -165,3 +165,43 @@ class CameraArray(sensor.BoxSpaceSensor):
         out[:, :, 4] = seg_array
 
         return out
+
+
+class DirectionSensor(sensor.BoxSpaceSensor):
+    """A sensor that reports the direction that the robot should move to."""
+
+    def __init__(self,
+                 lower_bound: _FLOAT_OR_ARRAY = -1.0,
+                 upper_bound: _FLOAT_OR_ARRAY = 1.0,
+                 name: typing.Text = "Direction",
+                 dtype: typing.Type[typing.Any] = np.float64) -> None:
+        """Constructs LastActionSensor.
+
+        Args:
+        lower_bound: the lower bound of the actions
+        upper_bound: the upper bound of the actions
+        name: the name of the sensor
+        dtype: data type of sensor value
+        """
+        self.direction = np.zeros(2)
+        self._env = None
+
+        super().__init__(name=name,
+                        shape=(self._num_actions,),
+                        lower_bound=lower_bound,
+                        upper_bound=upper_bound,
+                        dtype=dtype)
+
+    def on_reset(self, env):
+        """From the callback, the sensor remembers the environment.
+
+        Args:
+        env: the environment who invokes this callback function.
+        """
+        self._env = env
+        dir = [np.random.normal() for _ in range(2)]
+        self.direction = dir / np.linalg.norm(dir)
+
+    def _get_observation(self) -> _ARRAY:
+        """Returns the robot should move to."""
+        return self.direction

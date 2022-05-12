@@ -42,7 +42,7 @@ def build_regular_env(robot_class,
                       wrap_trajectory_generator=True):
 
 
-    task_name = "BaseTask"
+    task_name = "DirectionTask"
 
     env_sensors = [
         CameraArray()

@@ -20,6 +20,8 @@ from __future__ import print_function
 
 import numpy as np
 
+from locomotion_simulation.locomotion_custom.envs.locomotion_gym_env import LocomotionGymEnv
+
 class BaseTask():
     """Default task."""
 
@@ -77,3 +79,21 @@ class EnergyTask(BaseTask):
         # print(self.current_base_pos[0] - self.last_base_pos[0] - self.energy_consumption * 0.01)
         # print("_______")
         return self.current_base_pos[0] - self.last_base_pos[0] - self.energy_consumption
+
+class DirectionTask(BaseTask):
+    """Gives reward depending on the direction"""
+    def reward(self, env: LocomotionGymEnv):
+        """Get the reward without side effects."""
+        direction_sensor = env.sensor_by_name("Direction")
+        dir = direction_sensor.direction
+        change = self.current_base_pos[:2] - self.last_base_pos[:2]
+        change = change / np.linalg.norm(change)
+
+        self._pybullet_client.addUserDebugLine(
+            base_pos,
+            base_pos + dir * 2,
+            lineColorRGB=[0, 0, 1],
+            lineWidth=2.0,
+            lifeTime=0.005)
+
+        return np.dot(dir, change)
