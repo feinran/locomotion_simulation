@@ -48,7 +48,8 @@ class LocomotionGymEnv(gym.Env):
                  env_sensors=None,
                  robot_sensors=None,
                  task=None,
-                 env_randomizers=None):
+                 env_randomizers=None,
+                 config={}):
         """Initializes the locomotion gym environment.
 
         Args:
@@ -62,6 +63,7 @@ class LocomotionGymEnv(gym.Env):
         env_randomizers: A list of EnvRandomizer(s). An EnvRandomizer may
             randomize the physical property of minitaur, change the terrrain during
             reset(), or add perturbation forces during step().
+        config: A dict of configuration options
 
         Raises:
         ValueError: If the num_action_repeat is less than 1.
@@ -69,6 +71,7 @@ class LocomotionGymEnv(gym.Env):
         """
 
         self.seed()
+        self._config = config
         self._gym_config = gym_config
         self._robot_class = robot_class
         self._robot_sensors = robot_sensors
@@ -225,8 +228,9 @@ class LocomotionGymEnv(gym.Env):
                 # "hills": self._pybullet_client.loadURDF("env_meshes/hilly_1.urdf", [0, 0, 0]),
                 # "blocks": self._pybullet_client.loadURDF("env_meshes/blocky_1.urdf", [0, 0, 0]),
                 # "samurai": self._pybullet_client.loadURDF("samurai.urdf", [0, 0, 0]),
-                "ground": self._pybullet_client.loadURDF("plane_implicit.urdf", [0, 0, 0]),
+                # "ground": self._pybullet_client.loadURDF("plane_implicit.urdf", [0, 0, 0]),
                 # "ball": self._pybullet_client.loadURDF("soccerball.urdf", [1, 0, 2])
+                "ground": self._pybullet_client.loadURDF(self._config['ground'], [0, 0, 0]),
             }
 
             # Rebuild the robot

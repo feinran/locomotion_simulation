@@ -23,13 +23,12 @@ from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
     trajectory_generator_wrapper_env
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import simple_openloop
 from locomotion_simulation.locomotion_custom.envs.sensors import robot_sensors
-from locomotion_simulation.locomotion_custom.envs.sensors.environment_sensors import \
-    CameraArray, LastActionSensor,  DirectionSensor
 from locomotion_simulation.locomotion_custom.robots import a1
 from locomotion_simulation.locomotion_custom.robots import laikago
 from locomotion_simulation.locomotion_custom.robots import robot_config
 
 
+from locomotion_simulation.locomotion_custom.envs.sensors import environment_sensors
 from locomotion_simulation.locomotion_custom.envs import custom_tasks
 from inspect import getmembers, isclass
 
@@ -39,26 +38,17 @@ def build_regular_env(robot_class,
                       enable_rendering=False,
                       on_rack=False,
                       action_limit=(0.75, 0.75, 0.75),
-                      wrap_trajectory_generator=True):
-
-
-    task_name = "DirectionTask"
-
-    env_sensors = [
-        # CameraArray(),
-        DirectionSensor(),
-        LastActionSensor(num_actions=12)
-    ]
-
+                      wrap_trajectory_generator=True,
+                      config={}):
 
     sim_params = locomotion_gym_config.SimulationParameters()
     sim_params.enable_rendering = enable_rendering
     sim_params.motor_control_mode = motor_control_mode
     sim_params.reset_time = 2
     sim_params.num_action_repeat = 10
-    sim_params.enable_action_interpolation = True
-    sim_params.enable_action_filter = True
-    sim_params.enable_clip_motor_commands = True  # disable instant movement
+    sim_params.enable_action_interpolation = config['action_interpolation']
+    sim_params.enable_action_filter = config['action_filter']
+    sim_params.enable_clip_motor_commands = config['action_clip']
     sim_params.robot_on_rack = on_rack
 
     gym_config = locomotion_gym_config.LocomotionGymConfig(
@@ -70,13 +60,22 @@ def build_regular_env(robot_class,
         robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
     ]
 
-    task = dict(getmembers(custom_tasks, isclass))[task_name]()
+    env_sensors = []
+    sensor_classes = dict(getmembers(environment_sensors, isclass))
+    for sensor, parameters in config['env_sensors'].items():
+        parameters = parameters.copy()
+        if parameters.pop('enabled'):
+            sensor_class = sensor_classes[sensor]
+            sensor = sensor_class(**parameters)
+            env_sensors.append(sensor)
 
+    task = dict(getmembers(custom_tasks, isclass))[config['task']]()
     env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
                                               robot_class=robot_class,
                                               env_sensors=env_sensors,
                                               robot_sensors=sensors,
-                                              task=task)
+                                              task=task,
+                                              config=config)
 
     env = obs_dict_to_array_wrapper.ObservationDictionaryToArrayWrapper(
         env)
