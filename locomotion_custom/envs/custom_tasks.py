@@ -87,7 +87,8 @@ class DirectionTask(BaseTask):
         direction_sensor = env.sensor_by_name("Direction")
         dir = direction_sensor.direction
         change = np.array(self.current_base_pos[:2]) - np.array(self.last_base_pos[:2])
-        change = change / np.linalg.norm(change)
+        magnitude = np.linalg.norm(change)
+        change = change / magnitude
 
         if env.rendering_enabled:
             env.pybullet_client.addUserDebugLine(
@@ -97,4 +98,5 @@ class DirectionTask(BaseTask):
                 lineWidth=2.0,
                 lifeTime=0.005)
 
-        return np.dot(dir, change)
+        dot = np.dot(dir, change)
+        return np.sign(dot) * magnitude * dot * dot
