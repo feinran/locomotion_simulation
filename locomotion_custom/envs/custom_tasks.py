@@ -90,6 +90,10 @@ class DirectionTask(BaseTask):
         magnitude = np.linalg.norm(change)
         change = change / magnitude
 
+        rot_quat = env.robot.GetTrueBaseOrientation()
+        rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
+        forward = np.array([rot_mat[i] for i in [0, 3]])
+
         if env.rendering_enabled:
             env.pybullet_client.addUserDebugLine(
                 self.current_base_pos,
@@ -98,5 +102,15 @@ class DirectionTask(BaseTask):
                 lineWidth=2.0,
                 lifeTime=0.005)
 
-        dot = np.dot(dir, change)
-        return np.sign(dot) * magnitude * dot * dot
+            env.pybullet_client.addUserDebugLine(
+                self.current_base_pos,
+                self.current_base_pos + np.append(forward, 0) * 2,
+                lineColorRGB=[1, 0, 0],
+                lineWidth=2.0,
+                lifeTime=0.005)
+
+        movement_dot = np.dot(dir, change)
+        movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
+        alignment_dot = np.dot(dir, forward)
+        alignment_reward = np.sign(alignment_dot) * alignment_dot * alignment_dot
+        return movement_reward + alignment_reward
