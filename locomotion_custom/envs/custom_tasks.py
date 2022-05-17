@@ -112,5 +112,5 @@ class DirectionTask(BaseTask):
         movement_dot = np.dot(dir, change)
         movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
         alignment_dot = np.dot(dir, forward)
-        alignment_reward = np.sign(alignment_dot) * alignment_dot * alignment_dot
+        alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
         return movement_reward + alignment_reward
