@@ -199,8 +199,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         env: the environment who invokes this callback function.
         """
         self._env = env
-        dir = [np.random.normal() for _ in range(2)]
-        self.direction = dir / np.linalg.norm(dir)
+        angle = np.random.normal(np.pi, np.pi / 2)
+        self.direction = np.array([np.cos(angle), np.sin(angle)])
 
     def _get_observation(self) -> _ARRAY:
         """Returns the robot should move to."""
