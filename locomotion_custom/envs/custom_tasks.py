@@ -80,8 +80,9 @@ class EnergyTask(BaseTask):
         # print("_______")
         return self.current_base_pos[0] - self.last_base_pos[0] - self.energy_consumption
 
+
 class DirectionTask(BaseTask):
-    """Gives reward depending on the direction"""
+    """Returns reward depending on the direction"""
     def reward(self, env: LocomotionGymEnv):
         """Get the reward without side effects."""
         direction_sensor = env.sensor_by_name("Direction")
