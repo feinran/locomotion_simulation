@@ -205,6 +205,9 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         else:
             angle = np.random.normal(np.pi / 2, np.pi / 4)
 
+        # new uniform angel
+        angle = np.random.uniform(0, np.pi)
+        
         self.direction = np.array([np.cos(angle), np.sin(angle)])
 
     def _get_observation(self) -> _ARRAY:
