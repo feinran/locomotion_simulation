@@ -171,6 +171,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
     """A sensor that reports the direction that the robot should move to."""
 
     def __init__(self,
+                 speed: float = None,
+                 distribution: typing.Text = "uniform",
                  lower_bound: _FLOAT_OR_ARRAY = -1.0,
                  upper_bound: _FLOAT_OR_ARRAY = 1.0,
                  name: typing.Text = "Direction",
@@ -183,6 +185,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         name: the name of the sensor
         dtype: data type of sensor value
         """
+        self.speed = speed
+        self.distribution = distribution
         self.direction = np.zeros(2)
         self._env = None
 
@@ -200,15 +204,18 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         """
         self._env = env
 
-        if np.random.rand() > 0.5:
-            angle = np.random.normal(3 * np.pi / 2, np.pi / 4)
-        else:
-            angle = np.random.normal(np.pi / 2, np.pi / 4)
-
-        # new uniform angel
-        angle = np.random.uniform(0, np.pi)
+        if self.distribution == "left_right":
+            if np.random.rand() > 0.5:
+                angle = np.random.normal(3 * np.pi / 2, np.pi / 4)
+            else:
+                angle = np.random.normal(np.pi / 2, np.pi / 4)
+        elif self.distribution == "uniform":
+            angle = np.random.uniform(0, np.pi)
         
         self.direction = np.array([np.cos(angle), np.sin(angle)])
+
+        if self.speed is not None:
+            self.direction *= self.speed
 
     def _get_observation(self) -> _ARRAY:
         """Returns where the robot should move to."""

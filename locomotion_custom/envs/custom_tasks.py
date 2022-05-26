@@ -82,11 +82,25 @@ class EnergyTask(BaseTask):
 
 
 class DirectionTask(BaseTask):
+    def __init__(self):
+        super().__init__()
+        self.base_velocity = np.zeros(3)
+
+    def reset(self, env):
+        super().reset(env)
+        self.base_velocity = env.robot.GetBaseVelocity()
+
+    def update(self, env):
+        super().update(env)
+        self.base_velocity = env.robot.GetBaseVelocity()
+
     """Returns reward depending on the direction"""
     def reward(self, env: LocomotionGymEnv):
         """Get the reward without side effects."""
         direction_sensor = env.sensor_by_name("Direction")
         dir = direction_sensor.direction
+        speed = direction_sensor.speed
+        velocity = np.zeros(3)
         change = np.array(self.current_base_pos[:2]) - np.array(self.last_base_pos[:2])
         magnitude = np.linalg.norm(change)
         change = change / magnitude
@@ -94,6 +108,10 @@ class DirectionTask(BaseTask):
         rot_quat = env.robot.GetTrueBaseOrientation()
         rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
         forward = np.array([rot_mat[i] for i in [0, 3]])
+
+        if speed is not None:
+            velocity = np.array(env.robot.GetBaseVelocity()[:2])
+            magnitude = speed - np.linalg.norm(dir - velocity)
 
         if env.rendering_enabled:
             env.pybullet_client.addUserDebugLine(
@@ -110,6 +128,14 @@ class DirectionTask(BaseTask):
                 lineWidth=2.0,
                 lifeTime=0.005)
 
+            env.pybullet_client.addUserDebugLine(
+                self.current_base_pos,
+                self.current_base_pos + np.append(velocity, 0) * 2,
+                lineColorRGB=[0, 1, 0],
+                lineWidth=2.0,
+                lifeTime=0.005)
+
+        dir = dir / np.linalg.norm(dir)
         movement_dot = np.dot(dir, change)
         movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
         alignment_dot = np.dot(dir, forward)
