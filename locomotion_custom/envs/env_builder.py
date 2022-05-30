@@ -69,7 +69,24 @@ def build_regular_env(robot_class,
             sensor = sensor_class(**parameters)
             env_sensors.append(sensor)
 
-    task = dict(getmembers(custom_tasks, isclass))[config['task']]()
+    task = None
+    if type(config['task']) == str:
+        task = dict(getmembers(custom_tasks, isclass))[config['task']]()
+    else:
+        task_classes = dict(getmembers(custom_tasks, isclass))
+        for task_name, parameters in config['task'].items():
+            parameters = parameters.copy()
+            if parameters.pop('enabled'):
+                if task is not None:
+                    raise Exception('More than one task is enabled!')
+
+                task_class = task_classes[task_name]
+                task = task_class(**parameters)
+
+    if task is None:
+        raise Exception('No task is enabled!')
+                    
+
     env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
                                               robot_class=robot_class,
                                               env_sensors=env_sensors,
