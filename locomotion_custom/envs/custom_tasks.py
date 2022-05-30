@@ -112,7 +112,7 @@ class DirectionTask(BaseTask):
         if speed is not None:
             velocity = np.array(env.robot.GetBaseVelocity()[:2])
             magnitude = speed - np.linalg.norm(dir - velocity)
-
+            
         if env.rendering_enabled:
             env.pybullet_client.addUserDebugLine(
                 self.current_base_pos,

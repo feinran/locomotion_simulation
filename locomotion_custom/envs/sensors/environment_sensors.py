@@ -218,5 +218,12 @@ class DirectionSensor(sensor.BoxSpaceSensor):
             self.direction *= self.speed
 
     def _get_observation(self) -> _ARRAY:
-        """Returns where the robot should move to."""
+        """
+        Returns where the robot should move to.
+        """
         return self.direction
+    
+    @property
+    def angle(self):
+        x = self.direction[0] / self.speed
+        return np.arccos(x)
