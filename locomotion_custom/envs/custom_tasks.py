@@ -110,7 +110,7 @@ class DirectionTask(BaseTask):
         super().update(env)
         self.base_velocity = env.robot.GetBaseVelocity()
 
-    def debug_lines(self, env, forward, velocity):
+    def debug_lines(self, env, forward, velocity, dir):
         env.pybullet_client.addUserDebugLine(
             self.current_base_pos,
             self.current_base_pos + np.append(dir, 0) * 2,
@@ -158,7 +158,7 @@ class DirectionTask(BaseTask):
             magnitude = speed - np.linalg.norm(dir - velocity)
             
         if env.rendering_enabled:
-            self.debug_lines(env, forward, velocity)
+            self.debug_lines(env, forward, velocity, dir)
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
         movement_dot = np.dot(dir, change)
