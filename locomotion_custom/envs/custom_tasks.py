@@ -141,7 +141,6 @@ class DirectionTask(BaseTask):
         # get sensor data
         direction_sensor = env.sensor_by_name("Direction")
         dir = direction_sensor.direction 
-        dir = dir / np.linalg.norm(dir)  # normalized target direction
         speed = direction_sensor.speed
         velocity = np.zeros(3)
         
@@ -161,6 +160,7 @@ class DirectionTask(BaseTask):
         if env.rendering_enabled:
             self.debug_lines(env, forward, velocity)
 
+        dir = dir / np.linalg.norm(dir)  # normalized target direction
         movement_dot = np.dot(dir, change)
         movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
         alignment_dot = np.dot(dir, forward)
