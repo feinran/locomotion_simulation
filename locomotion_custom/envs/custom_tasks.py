@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from turtle import forward
 
 import numpy as np
 
@@ -63,22 +64,37 @@ class BaseTask():
 
 class EnergyTask(BaseTask):
     """Penalize energy consumption"""
+    def __init__(self, target_speed, alpha_1, alpha_2, alpha_3):
+        super().__init__()
+        self.energy_consumption = 0
+        self.base_velocity = np.zeros(3)
+        self.rpy = (0, 0, 0)
+
+        self.target_speed = target_speed
+        self.alpha_1 = alpha_1
+        self.alpha_2 = alpha_2
+        self.alive = target_speed * alpha_3
+
     def reset(self, env):
         super().reset(env)
         self.energy_consumption = 0
+        self.base_velocity = np.zeros(3)
+        self.rpy = (0, 0, 0)
 
     def update(self, env):
         super().update(env)
         self.energy_consumption = env.robot.GetEnergyConsumptionPerControlStep()
+        self.base_velocity = env.robot.GetBaseVelocity()
+        self.rpy = env.robot.GetTrueBaseRollPitchYaw()
 
     def reward(self, env):
         """Get the reward without side effects."""
         del env
-        # print(self.current_base_pos[0] - self.last_base_pos[0])
-        # print(self.energy_consumption * 0.01)
-        # print(self.current_base_pos[0] - self.last_base_pos[0] - self.energy_consumption * 0.01)
-        # print("_______")
-        return self.current_base_pos[0] - self.last_base_pos[0] - self.energy_consumption
+
+        forward = -self.alpha_2 * abs(self.target_speed - self.base_velocity[0])
+        forward -= self.base_velocity[1] * self.base_velocity[1]
+        forward -= self.rpy[2] * self.rpy[2]
+        return forward + self.alpha_1 * self.energy_consumption + self.alive
 
 
 class DirectionTask(BaseTask):
