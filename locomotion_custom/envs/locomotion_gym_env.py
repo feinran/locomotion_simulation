@@ -140,6 +140,10 @@ class LocomotionGymEnv(gym.Env):
         self.observation_space = (
             space_utils.convert_sensors_to_gym_space_dictionary(
                 self.all_sensors()))
+        
+        
+        # for evaluation callback
+        self._reward_acc = 0
 
     def _build_action_space(self):
         """Builds action space based on motor control mode."""
@@ -279,6 +283,9 @@ class LocomotionGymEnv(gym.Env):
         # Loop over all env randomizers.
         for env_randomizer in self._env_randomizers:
             env_randomizer.randomize_env(self)
+            
+        # reset reward acc
+        self._reward_acc = 0
 
         return self._get_observation()
 
@@ -339,6 +346,7 @@ class LocomotionGymEnv(gym.Env):
             self._task.update(self)
 
         reward = self._reward()
+        self._reward_acc += reward
 
         done = self._termination()
         self._env_step_counter += 1
@@ -526,3 +534,7 @@ class LocomotionGymEnv(gym.Env):
     @property
     def robot_class(self):
         return self._robot_class
+    
+    @property
+    def reward_acc(self):
+        return self._reward_acc
