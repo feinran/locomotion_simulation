@@ -195,7 +195,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
                         lower_bound=lower_bound,
                         upper_bound=upper_bound,
                         dtype=dtype)
-
+    
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
 
@@ -211,7 +211,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
             else:
                 angle = np.random.normal(np.pi / 2, np.pi / 4)
         elif self.distribution == "uniform":
-            angle = np.random.uniform(0, np.pi)
+            angle = np.random.uniform(0, 2 * np.pi)
         
         # create direction vector
         self.direction = np.array([np.cos(angle), np.sin(angle)])
