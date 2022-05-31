@@ -188,6 +188,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         self.speed = speed
         self.distribution = distribution
         self.direction = np.zeros(2)
+        self._angle = 0
         self._env = None
 
         super().__init__(name=name,
@@ -207,14 +208,14 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         # decide wich distribution we will use
         if self.distribution == "left_right":
             if np.random.rand() > 0.5:
-                angle = np.random.normal(3 * np.pi / 2, np.pi / 4)
+                self._angle = np.random.normal(3 * np.pi / 2, np.pi / 4)
             else:
-                angle = np.random.normal(np.pi / 2, np.pi / 4)
+                self._angle = np.random.normal(np.pi / 2, np.pi / 4)
         elif self.distribution == "uniform":
-            angle = np.random.uniform(0, 2 * np.pi)
+            self._angle = np.random.uniform(0, 2 * np.pi)
         
         # create direction vector
-        self.direction = np.array([np.cos(angle), np.sin(angle)])
+        self.direction = np.array([np.cos(self._angle), np.sin(self._angle)])
 
         # multiply the normed direction vector with the speed
         if self.speed is not None:
@@ -228,5 +229,4 @@ class DirectionSensor(sensor.BoxSpaceSensor):
     
     @property
     def angle(self):
-        x = self.direction[0] / self.speed
-        return np.arccos(x)
+        return self._angle
