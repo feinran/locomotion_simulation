@@ -145,6 +145,7 @@ class LocomotionGymEnv(gym.Env):
         # for evaluation callback
         self._reward_acc = 0
         self._energy_acc = 0
+        self._current_rollout_step = 0
 
     def _build_action_space(self):
         """Builds action space based on motor control mode."""
@@ -288,6 +289,8 @@ class LocomotionGymEnv(gym.Env):
         # reset reward acc
         self._reward_acc = 0
         self._energy_acc = 0
+        
+        self._current_rollout_step = 0
 
         return self._get_observation()
 
@@ -352,6 +355,8 @@ class LocomotionGymEnv(gym.Env):
         # update accumulators
         self._reward_acc += reward
         self._energy_acc += self._robot.GetEnergyConsumptionPerControlStep()
+        
+        self._current_rollout_step += 1
 
         done = self._termination()
         self._env_step_counter += 1
