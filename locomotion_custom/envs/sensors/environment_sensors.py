@@ -90,7 +90,7 @@ class CameraArraySensor(sensor.BoxSpaceSensor):
         self.render_with = 480  # TODO: into config
 
         # Warning is caused by typing from Box Space Sensor shape
-        super(CameraArray, self).__init__(name=name,
+        super(CameraArraySensor, self).__init__(name=name,
                                           shape=(self.render_height, self.render_with, 5),
                                           lower_bound=lower_bound,
                                           upper_bound=upper_bound,
