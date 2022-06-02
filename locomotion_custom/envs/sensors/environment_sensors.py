@@ -66,7 +66,7 @@ class LastActionSensor(sensor.BoxSpaceSensor):
         return self._env.last_action
 
 
-class CameraArray(sensor.BoxSpaceSensor):
+class CameraArraySensor(sensor.BoxSpaceSensor):
     """sensor that represents the front cameras"""
 
     def __init__(self,
