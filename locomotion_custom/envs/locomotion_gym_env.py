@@ -552,3 +552,7 @@ class LocomotionGymEnv(gym.Env):
     @property
     def energy_acc(self):
         return self._energy_acc
+    
+    @property
+    def current_rollout_step(self):
+        return self._current_rollout_step
