@@ -106,7 +106,7 @@ class DirectionTask(BaseTask):
 
         # get sensor data
         direction_sensor = env.sensor_by_name("Direction")
-        dir = direction_sensor.direction 
+        dir = direction_sensor.direction
         
         # how far the robot has moved
         change = np.array(self.current_base_pos[:2]) - np.array(self.last_base_pos[:2])
