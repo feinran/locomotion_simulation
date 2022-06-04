@@ -172,7 +172,9 @@ class DirectionSensor(sensor.BoxSpaceSensor):
 
     def __init__(self,
                  speed: float = None,
-                 distribution: typing.Text = "uniform",
+                 distribution: typing.Text = "left_right",
+                 mean: float = 0,
+                 std: float = 0,
                  lower_bound: _FLOAT_OR_ARRAY = -1.0,
                  upper_bound: _FLOAT_OR_ARRAY = 1.0,
                  name: typing.Text = "Direction",
@@ -187,6 +189,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         """
         self.speed = speed
         self.distribution = distribution
+        self.mean = mean
+        self.std = std
         self.direction = np.zeros(2)
         self._angle = 0
         self._env = None
@@ -196,7 +200,22 @@ class DirectionSensor(sensor.BoxSpaceSensor):
                         lower_bound=lower_bound,
                         upper_bound=upper_bound,
                         dtype=dtype)
-    
+
+    def __sample_angle(self):
+        angle = 0
+        # decide wich distribution we will use
+        if self.distribution == "left_right":
+            if np.random.rand() > 0.5:
+                angle = np.random.normal(3 * np.pi / 2, np.pi / 4)
+            else:
+                angle = np.random.normal(np.pi / 2, np.pi / 4)
+        elif self.distribution == "uniform":
+            angle = np.random.uniform(0, 2 * np.pi)
+        elif self.distribution == "normal":
+            angle = np.random.normal(self.mean, self.std)
+
+        return angle
+
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
 
@@ -205,15 +224,9 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         """
         self._env = env
 
-        # decide wich distribution we will use
-        if self.distribution == "left_right":
-            if np.random.rand() > 0.5:
-                self._angle = np.random.normal(3 * np.pi / 2, np.pi / 4)
-            else:
-                self._angle = np.random.normal(np.pi / 2, np.pi / 4)
-        elif self.distribution == "uniform":
-            self._angle = np.random.uniform(0, 2 * np.pi)
-        
+        # get sampled angle
+        self._angle = self.__sample_angle()
+
         # create direction vector
         self.direction = np.array([np.cos(self._angle), np.sin(self._angle)])
 
