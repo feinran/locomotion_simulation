@@ -118,7 +118,7 @@ class DirectionTask(BaseTask):
         forward = np.array([rot_mat[i] for i in [0, 3]])  # direction where the robot is looking at
     
         if env.rendering_enabled:
-            debug_lines(self.current_base_pos, env, forward, np.zeros(3), dir)
+            debug_lines(self.current_base_pos, env, forward, None, dir)
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
         movement_dot = np.dot(dir, change)
@@ -181,9 +181,10 @@ class DirectionSpeedTask(BaseTask):
             alignment_reward = -abs(alignment_reward)
 
         return movement_reward + alignment_reward
+    
 
 
-def debug_lines(current_base_pos, env, forward, velocity, dir):
+def debug_lines(current_base_pos, env, forward, velocity = None, dir = None):
     env.pybullet_client.addUserDebugLine(
         current_base_pos,
         current_base_pos + np.append(dir, 0) * 2,
@@ -198,9 +199,10 @@ def debug_lines(current_base_pos, env, forward, velocity, dir):
         lineWidth=2.0,
         lifeTime=0.005)
 
-    env.pybullet_client.addUserDebugLine(
-        current_base_pos,
-        current_base_pos + np.append(velocity, 0) * 2,
-        lineColorRGB=[0, 1, 0],
-        lineWidth=2.0,
-        lifeTime=0.005)
+    if velocity is not None:
+        env.pybullet_client.addUserDebugLine(
+            current_base_pos,
+            current_base_pos + np.append(velocity, 0) * 2,
+            lineColorRGB=[0, 1, 0],
+            lineWidth=2.0,
+            lifeTime=0.005)
