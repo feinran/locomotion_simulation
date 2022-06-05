@@ -16,6 +16,7 @@
 """Simple sensors related to the environment."""
 import numpy as np
 import typing
+from typing import Tuple
 
 from scipy.spatial.transform import Rotation
 
@@ -73,6 +74,7 @@ class CameraArraySensor(sensor.BoxSpaceSensor):
                  lower_bound: _FLOAT_OR_ARRAY = 0,
                  upper_bound: _FLOAT_OR_ARRAY = 255,
                  name: typing.Text = "CameraArray",
+                 resolution: Tuple = (100, 100),
                  dtype: typing.Type[typing.Any] = np.float64) -> None:
         """Constructs camera array sensor.
 
@@ -86,8 +88,7 @@ class CameraArraySensor(sensor.BoxSpaceSensor):
         self._env = None
 
         # render shapes for the camera
-        self.render_height = 360  # TODO: into config, check for memory consumption on cluster
-        self.render_with = 480  # TODO: into config
+        self.render_with, self.render_height = resolution
 
         # Warning is caused by typing from Box Space Sensor shape
         super(CameraArraySensor, self).__init__(name=name,
@@ -163,6 +164,9 @@ class CameraArraySensor(sensor.BoxSpaceSensor):
         out[:, :, :3] = rgb_array
         out[:, :, 3] = depth_array
         out[:, :, 4] = seg_array
+        
+        print(out)
+        print(out.shape)
 
         return out
 
@@ -243,3 +247,4 @@ class DirectionSensor(sensor.BoxSpaceSensor):
     @property
     def angle(self):
         return self._angle
+    
