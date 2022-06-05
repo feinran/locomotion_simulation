@@ -362,6 +362,7 @@ class LocomotionGymEnv(gym.Env):
         self._env_step_counter += 1
         if done:
             self._robot.Terminate()
+        
         return self._get_observation(), reward, done, {}
 
     def render(self, mode='rgb_array'):
@@ -476,7 +477,7 @@ class LocomotionGymEnv(gym.Env):
         sensors_dict = {}
         for s in self.all_sensors():
             sensors_dict[s.get_name()] = s.get_observation()
-
+            
         observations = collections.OrderedDict(sorted(list(sensors_dict.items())))
         return observations
 
