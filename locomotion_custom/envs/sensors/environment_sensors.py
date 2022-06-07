@@ -165,9 +165,6 @@ class CameraArraySensor(sensor.BoxSpaceSensor):
         out[:, :, 3] = depth_array
         out[:, :, 4] = seg_array
         
-        print(out)
-        print(out.shape)
-
         return out
 
 
@@ -191,6 +188,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         name: the name of the sensor
         dtype: data type of sensor value
         """
+        print("init is called")
         self.speed = speed
         self.distribution = distribution
         self.mean = mean
@@ -198,7 +196,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         self.direction = np.zeros(2)
         self._angle = 0
         self._env = None
-
+        self._buckets = np.ones(2) # are needed for adapted sampling, is a list with rewards against 360 degree
+        
         super().__init__(name=name,
                         shape=(2,),
                         lower_bound=lower_bound,
@@ -217,7 +216,26 @@ class DirectionSensor(sensor.BoxSpaceSensor):
             angle = np.random.uniform(0, 2 * np.pi)
         elif self.distribution == "normal":
             angle = np.random.normal(self.mean, self.std)
-
+        elif self.distribution == "adapted":
+            print("Buckets: ", self._buckets)
+            # get minimal bucket to zero
+            min_weight = min(self._buckets)
+            buckets =  self._buckets + min_weight
+            # normalize buckets
+            buckets /= buckets.sum()
+            # get reverse propability
+            buckets = 1 - buckets
+            # normalize reversed propability
+            bucket_sampling_weights = buckets / buckets.sum()
+            bucket_idx = np.random.choice(list(range(len(self._buckets))), p=bucket_sampling_weights) 
+            # get lowe / upper limit for uniform sampling
+            angels_per_bucket = 2 * np.pi / len(self._buckets)
+            lower = bucket_idx * angels_per_bucket
+            higher = (bucket_idx + 1) * angels_per_bucket
+            
+            # sample angel from bucket uniformly
+            angle = np.random.uniform(lower, higher)
+            
         return angle
 
     def on_reset(self, env):
@@ -236,7 +254,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
 
         # multiply the normed direction vector with the speed
         if self.speed is not None:
-            self.direction *= self.speed
+            self.direction *= self.speed    
 
     def _get_observation(self) -> _ARRAY:
         """
@@ -248,3 +266,11 @@ class DirectionSensor(sensor.BoxSpaceSensor):
     def angle(self):
         return self._angle
     
+    @property
+    def buckets(self):
+        return self._buckets
+    
+    @buckets.setter
+    def buckets(self, value):
+        print("setter is called with: ", len(value))
+        self._buckets = value
