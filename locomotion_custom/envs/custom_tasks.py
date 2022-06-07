@@ -99,6 +99,19 @@ class EnergyTask(BaseTask):
 
 class DirectionTask(BaseTask):
     """Returns reward depending on the direction"""
+    def __init__(self, similarity_func_name, l: float = None):
+        super().__init__()
+        parameters = {"l": l}
+        self.similarity_func = self.__get_similarity_measurement_func(name=similarity_func_name)
+        
+    def __get_similarity_measurement_func(self, name, parameters):
+        if name.lower() == "rbf":
+            def rbf(v1, v2):
+                return np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * parameters["l"]**2))
+            return rbf
+        elif name.lower() == "dot":
+            return np.dot
+        
     def reward(self, env: LocomotionGymEnv):
         """
         Get the reward without side effects.
@@ -121,9 +134,9 @@ class DirectionTask(BaseTask):
             debug_lines(self.current_base_pos, env, forward, None, dir)
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
-        movement_dot = np.dot(dir, change)
+        movement_dot = self.similarity_func(dir, change)
         movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
-        alignment_dot = np.dot(dir, forward)
+        alignment_dot = self.similarity_func(dir, forward)
         alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
 
         return movement_reward + alignment_reward
@@ -206,3 +219,4 @@ def debug_lines(current_base_pos, env, forward, velocity = None, dir = None):
             lineColorRGB=[0, 1, 0],
             lineWidth=2.0,
             lifeTime=0.005)
+
