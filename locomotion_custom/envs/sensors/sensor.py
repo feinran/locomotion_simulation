@@ -68,25 +68,25 @@ class Sensor(object):
         """Returns the lower bound of the observation.
 
 
-    Returns:
-      lower_bound: the lower bound of sensor values in np.array format
-    """
+        Returns:
+        lower_bound: the lower bound of sensor values in np.array format
+        """
         pass
 
     def get_upper_bound(self):
         """Returns the upper bound of the observation.
 
-    Returns:
-      upper_bound: the upper bound of sensor values in np.array format
-    """
+        Returns:
+        upper_bound: the upper bound of sensor values in np.array format
+        """
         pass
 
     def get_observation(self):
         """Returns the observation data.
 
-    Returns:
-      observation: the observed sensor values in np.array format
-    """
+        Returns:
+        observation: the observed sensor values in np.array format
+        """
         pass
 
     def set_robot(self, robot):
@@ -100,25 +100,25 @@ class Sensor(object):
     def on_reset(self, env):
         """A callback function for the reset event.
 
-    Args:
-      env: the environment who invokes this callback function.
-    """
+        Args:
+        env: the environment who invokes this callback function.
+        """
         pass
 
     def on_step(self, env):
         """A callback function for the step event.
 
-    Args:
-      env: the environment who invokes this callback function.
-    """
+        Args:
+        env: the environment who invokes this callback function.
+        """
         pass
 
     def on_terminate(self, env):
         """A callback function for the terminate event.
 
-    Args:
-      env: the environment who invokes this callback function.
-    """
+        Args:
+        env: the environment who invokes this callback function.
+        """
         pass
 
 
