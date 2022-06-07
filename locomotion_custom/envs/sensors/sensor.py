@@ -32,7 +32,8 @@ class Sensor(object):
     """A prototype class of sensors."""
 
     def __init__(self,
-                 name: typing.Text):
+                 name: typing.Text,
+                 common_data_path: typing.Text):
         """A basic constructor of the sensor.
 
     This initialized a robot as none. This instance may be regularly updated
@@ -40,9 +41,11 @@ class Sensor(object):
 
     Args:
       name: the name of the sensor
+      common_data_path: path to eval data from all envs
     """
         self._robot = None
         self._name = name
+        self._common_data_path = common_data_path 
 
     def get_name(self) -> typing.Text:
         return self._name
@@ -120,6 +123,10 @@ class Sensor(object):
         env: the environment who invokes this callback function.
         """
         pass
+    
+    def get_common_data_path(self):
+        """Returns location of common data"""
+        return self._common_data_path
 
 
 class BoxSpaceSensor(Sensor):
@@ -130,7 +137,8 @@ class BoxSpaceSensor(Sensor):
                  shape: typing.Tuple[int, ...],
                  lower_bound: _FLOAT_OR_ARRAY = -np.pi,
                  upper_bound: _FLOAT_OR_ARRAY = np.pi,
-                 dtype=np.float64) -> None:
+                 dtype=np.float64,
+                 common_data_path="") -> None:
         """
         Constructs a box type sensor.
 
@@ -141,7 +149,7 @@ class BoxSpaceSensor(Sensor):
           upper_bound: the upper_bound of sensor value, in float or np.array.
           dtype: data type of sensor value
         """
-        super(BoxSpaceSensor, self).__init__(name)
+        super(BoxSpaceSensor, self).__init__(name, common_data_path)
 
         self._shape = shape
         self._dtype = dtype

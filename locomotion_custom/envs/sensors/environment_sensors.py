@@ -17,8 +17,11 @@
 import numpy as np
 import typing
 from typing import Tuple
+import glob
+import json
 
 from scipy.spatial.transform import Rotation
+from callbacks import create_buckets
 
 from locomotion_simulation.locomotion_custom.envs.sensors import sensor
 
@@ -35,7 +38,8 @@ class LastActionSensor(sensor.BoxSpaceSensor):
                  lower_bound: _FLOAT_OR_ARRAY = -1.0,
                  upper_bound: _FLOAT_OR_ARRAY = 1.0,
                  name: typing.Text = "LastAction",
-                 dtype: typing.Type[typing.Any] = np.float64) -> None:
+                 dtype: typing.Type[typing.Any] = np.float64,
+                 common_data_path: typing.Text = "") -> None:
         """Constructs LastActionSensor.
 
     Args:
@@ -52,7 +56,8 @@ class LastActionSensor(sensor.BoxSpaceSensor):
                                                shape=(self._num_actions,),
                                                lower_bound=lower_bound,
                                                upper_bound=upper_bound,
-                                               dtype=dtype)
+                                               dtype=dtype,
+                                               common_data_path=common_data_path)
 
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
@@ -75,7 +80,8 @@ class CameraArraySensor(sensor.BoxSpaceSensor):
                  upper_bound: _FLOAT_OR_ARRAY = 255,
                  name: typing.Text = "CameraArray",
                  resolution: Tuple = (100, 100),
-                 dtype: typing.Type[typing.Any] = np.float64) -> None:
+                 dtype: typing.Type[typing.Any] = np.float64,
+                 common_data_path: typing.Text = "") -> None:
         """Constructs camera array sensor.
 
         Args:
@@ -95,7 +101,8 @@ class CameraArraySensor(sensor.BoxSpaceSensor):
                                           shape=(self.render_height, self.render_with, 5),
                                           lower_bound=lower_bound,
                                           upper_bound=upper_bound,
-                                          dtype=dtype)
+                                          dtype=dtype,
+                                          common_data_path=common_data_path)
 
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
@@ -179,7 +186,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
                  lower_bound: _FLOAT_OR_ARRAY = -1.0,
                  upper_bound: _FLOAT_OR_ARRAY = 1.0,
                  name: typing.Text = "Direction",
-                 dtype: typing.Type[typing.Any] = np.float64) -> None:
+                 dtype: typing.Type[typing.Any] = np.float64,
+                 common_data_path: typing.Text = "") -> None:
         """Constructs LastActionSensor.
 
         Args:
@@ -201,7 +209,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
                         shape=(2,),
                         lower_bound=lower_bound,
                         upper_bound=upper_bound,
-                        dtype=dtype)
+                        dtype=dtype,
+                        common_data_path=common_data_path)
 
     def __sample_angle(self):
         angle = 0
@@ -235,6 +244,32 @@ class DirectionSensor(sensor.BoxSpaceSensor):
             angle = np.random.uniform(lower, higher)
             
         return angle
+    
+    def __update_buckets(self):
+        """
+        1. load data_json 
+        2. if there is no json -> buckets = np.ones(8)
+        3. get angels and reward_acc
+        4. create buckets
+        """
+        # get latest eval_data_file
+        max_iter = 0
+        steps = 0
+        eval_data_file = ""
+        for name in glob.glob(self.get_common_data_path() + "/eval_data_*"):
+            steps = int(name.split("_")[-2])
+            if steps > max_iter:
+                max_iter = steps
+                eval_data_file = name
+                
+        if max_iter == 0:
+            return np.ones(8)
+                
+        # load json
+        file = open(eval_data_file)
+        data = json.load(file)
+        
+        return create_buckets(36, data["Direction"]["angle"], data["reward_acc"])
 
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
@@ -243,7 +278,14 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         env: the environment who invokes this callback function.
         """
         self._env = env
-
+        
+        buckets = self.__update_buckets()
+        print(buckets)
+        if len(buckets) != 8:
+            exit()
+        
+        
+    
         # get sampled angle
         self._angle = self.__sample_angle()
 
