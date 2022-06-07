@@ -203,7 +203,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         self.direction = np.zeros(2)
         self._angle = 0
         self._env = None
-        self._buckets = np.ones(2) # are needed for adapted sampling, is a list with rewards against 360 degree
+        self._buckets = np.ones(8) # are needed for adapted sampling, is a list with rewards against 360 degree
         
         super().__init__(name=name,
                         shape=(2,),
@@ -279,13 +279,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         """
         self._env = env
         
-        buckets = self.__update_buckets()
-        print(buckets)
-        if len(buckets) != 8:
-            exit()
+        self.buckets = self.__update_buckets()
         
-        
-    
         # get sampled angle
         self._angle = self.__sample_angle()
 
