@@ -14,6 +14,7 @@
 # limitations under the License.
 """Utilities for building environments."""
 import sacred.utils
+from helper import generate_names
 
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_env
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_config
@@ -40,15 +41,23 @@ def build_regular_env(robot_class,
                       action_limit=(0.75, 0.75, 0.75),
                       wrap_trajectory_generator=True,
                       config={}):
-
+    
+    env_config = config["env"]
+    _, results_dir, _= generate_names(config["results_dir"],
+                                   config["checkpoint"],
+                                   config["base_name"],
+                                   config["algo_type"])
+    
+    print(results_dir)
+    
     sim_params = locomotion_gym_config.SimulationParameters()
     sim_params.enable_rendering = enable_rendering
     sim_params.motor_control_mode = motor_control_mode
     sim_params.reset_time = 2
     sim_params.num_action_repeat = 10
-    sim_params.enable_action_interpolation = config['action_interpolation']
-    sim_params.enable_action_filter = config['action_filter']
-    sim_params.enable_clip_motor_commands = config['action_clip']
+    sim_params.enable_action_interpolation = env_config['action_interpolation']
+    sim_params.enable_action_filter = env_config['action_filter']
+    sim_params.enable_clip_motor_commands = env_config['action_clip']
     sim_params.robot_on_rack = on_rack
 
     gym_config = locomotion_gym_config.LocomotionGymConfig(
@@ -62,19 +71,21 @@ def build_regular_env(robot_class,
 
     env_sensors = []
     sensor_classes = dict(getmembers(environment_sensors, isclass))
-    for sensor, parameters in config['env_sensors'].items():
+    for sensor, parameters in env_config['env_sensors'].items():
         parameters = parameters.copy()
+        # add common data storage
+        parameters["common_data_path"] = results_dir
         if parameters.pop('enabled'):
             sensor_class = sensor_classes[sensor]
             sensor = sensor_class(**parameters)
             env_sensors.append(sensor)
 
     task = None
-    if type(config['task']) == str:
-        task = dict(getmembers(custom_tasks, isclass))[config['task']]()
+    if type(env_config['task']) == str:
+        task = dict(getmembers(custom_tasks, isclass))[env_config['task']]()
     else:
         task_classes = dict(getmembers(custom_tasks, isclass))
-        for task_name, parameters in config['task'].items():
+        for task_name, parameters in env_config['task'].items():
             parameters = parameters.copy()
             if parameters.pop('enabled'):
                 if task is not None:
@@ -92,7 +103,7 @@ def build_regular_env(robot_class,
                                               env_sensors=env_sensors,
                                               robot_sensors=sensors,
                                               task=task,
-                                              config=config)
+                                              config=env_config)
 
     env = obs_dict_to_array_wrapper.ObservationDictionaryToArrayWrapper(
         env)
