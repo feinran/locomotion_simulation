@@ -197,7 +197,7 @@ class LocomotionGymEnv(gym.Env):
             if sensor_.get_name() == name:
                 return sensor_
         return None
-
+    
     def reset(self,
               initial_motor_angles=None,
               reset_duration=0.0,
@@ -291,7 +291,8 @@ class LocomotionGymEnv(gym.Env):
         self._energy_acc = 0
         
         self._current_rollout_step = 0
-
+        
+        print("reset")
         return self._get_observation()
 
     def step(self, action):
@@ -477,7 +478,6 @@ class LocomotionGymEnv(gym.Env):
         sensors_dict = {}
         for s in self.all_sensors():
             sensors_dict[s.get_name()] = s.get_observation()
-            
         observations = collections.OrderedDict(sorted(list(sensors_dict.items())))
         return observations
 
@@ -521,6 +521,14 @@ class LocomotionGymEnv(gym.Env):
     @property
     def robot(self):
         return self._robot
+    
+    @property
+    def env_sensors(self):
+        return self._sensors
+    
+    @env_sensors.setter
+    def env_sensors(self, value):
+        self._sensors = value
 
     @property
     def env_step_counter(self):
