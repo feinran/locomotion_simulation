@@ -101,16 +101,16 @@ class DirectionTask(BaseTask):
     """Returns reward depending on the direction"""
     def __init__(self, similarity_func_name, l: float = None):
         super().__init__()
-        parameters = {"l": l}
-        self.similarity_func = self.__get_similarity_measurement_func(name=similarity_func_name)
+        self.similarity_func_name = similarity_func_name
+        self.l = l
         
-    def __get_similarity_measurement_func(self, name, parameters):
-        if name.lower() == "rbf":
-            def rbf(v1, v2):
-                return np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * parameters["l"]**2))
-            return rbf
-        elif name.lower() == "dot":
-            return np.dot
+    def similarity_func(self, v1, v2):
+        if self.similarity_func_name.lower() == "rbf":
+            rbf_value = np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * self.l**2))
+            return 2 * rbf_value -1  # to make it comparable to dot_prod
+
+        elif self.similarity_func_name.lower() == "dot":
+            return np.dot(v1, v2)
         
     def reward(self, env: LocomotionGymEnv):
         """

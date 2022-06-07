@@ -292,7 +292,6 @@ class LocomotionGymEnv(gym.Env):
         
         self._current_rollout_step = 0
         
-        print("reset")
         return self._get_observation()
 
     def step(self, action):

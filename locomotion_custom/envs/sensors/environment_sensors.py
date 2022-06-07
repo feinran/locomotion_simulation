@@ -188,7 +188,6 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         name: the name of the sensor
         dtype: data type of sensor value
         """
-        print("init is called")
         self.speed = speed
         self.distribution = distribution
         self.mean = mean
@@ -217,7 +216,6 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         elif self.distribution == "normal":
             angle = np.random.normal(self.mean, self.std)
         elif self.distribution == "adapted":
-            print("Buckets: ", self._buckets)
             # get minimal bucket to zero
             min_weight = min(self._buckets)
             buckets =  self._buckets + min_weight
