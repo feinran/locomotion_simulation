@@ -420,7 +420,7 @@ class FootContactSensor(sensor.BoxSpaceSensor):
         
     def on_step(self, env):
         # calcualte current robot speed
-        self._foot_contacts = np.array(env.robot.GetFootContacts())
+        self._foot_contacts = np.array(self._robot.GetFootContacts())
     
     def get_observation(self) -> np.ndarray:
         self._foot_contacts.astype(int)
@@ -450,12 +450,12 @@ class FootPositionSensor(sensor.BoxSpaceSensor):
                                                  upper_bound=upper_bound,
                                                  dtype=dtype)
     
-    def on_reset(self, env):
+    def on_reset(self):
         self._foot_positions = np.zeros((4, 3))  
         
-    def on_step(self, env):
+    def on_step(self):
         # calcualte current robot speed
-        self._foot_positions = np.array(env.robot.GetFootPositionInBaseFrame())  
+        self._foot_positions = np.array(self._robot.GetFootPositionInBaseFrame())  
     
     def get_observation(self) -> np.ndarray:
         self._foot_positions.flatten()
