@@ -193,6 +193,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
                  distribution: typing.Text = "left_right",
                  mean: float = 0,
                  std: float = 0,
+                 lower_sampling_limit: float = 0,
+                 upper_sampling_limit: float = np.pi,
                  lower_bound: _FLOAT_OR_ARRAY = -1.0,
                  upper_bound: _FLOAT_OR_ARRAY = 1.0,
                  name: typing.Text = "Direction",
@@ -210,6 +212,8 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         self._distribution = distribution
         self._mean = mean
         self._std = std
+        self._lower_sampling_limit = lower_sampling_limit
+        self._upper_sampling_limit = upper_sampling_limit
         self._direction = np.zeros(2)
         self._angle = 0
         self._rel_angle = 0
@@ -232,7 +236,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
             else:
                 angle = np.random.normal(np.pi / 2, np.pi / 4)
         elif self._distribution == "uniform":
-            angle = np.random.uniform(0, 2 * np.pi)
+            angle = np.random.uniform(self._lower_sampling_limit, self._upper_sampling_limit)
         elif self._distribution == "normal":
             angle = np.random.normal(self._mean, self._std)
         elif self._distribution == "adapted":
@@ -280,7 +284,11 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         file = open(eval_data_file)
         data = json.load(file)
         
-        return create_buckets(36, data["Direction"]["angle"], data["reward_acc"])
+        return create_buckets(num_buckets = 36, 
+                              angels = data["Direction"]["angle"], 
+                              accs = data["reward_acc"],
+                              lower_limit=self._lower_sampling_limit,
+                              upper_limit=self._upper_sampling_limit)
 
     @staticmethod
     def __retrieve_2D_angle(vector):
