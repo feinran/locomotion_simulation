@@ -596,18 +596,18 @@ class Minitaur(object):
     def GetBaseVelocity(self):
         """Get the linear velocity of minitaur's base.
 
-    Returns:
-      The velocity of minitaur's base.
-    """
+        Returns:
+            The velocity of minitaur's base.
+        """
         velocity, _ = self._pybullet_client.getBaseVelocity(self.quadruped)
         return velocity
 
     def GetTrueBaseRollPitchYaw(self):
         """Get minitaur's base orientation in euler angle in the world frame.
 
-    Returns:
-      A tuple (roll, pitch, yaw) of the base in world frame.
-    """
+        Returns:
+            A tuple (roll, pitch, yaw) of the base in world frame.
+        """
         orientation = self.GetTrueBaseOrientation()
         roll_pitch_yaw = self._pybullet_client.getEulerFromQuaternion(orientation)
         return np.asarray(roll_pitch_yaw)
@@ -615,11 +615,11 @@ class Minitaur(object):
     def GetBaseRollPitchYaw(self):
         """Get minitaur's base orientation in euler angle in the world frame.
 
-    This function mimicks the noisy sensor reading and adds latency.
-    Returns:
-      A tuple (roll, pitch, yaw) of the base in world frame polluted by noise
-      and latency.
-    """
+        This function mimicks the noisy sensor reading and adds latency.
+        Returns:
+        A tuple (roll, pitch, yaw) of the base in world frame polluted by noise
+        and latency.
+        """
         delayed_orientation = np.array(
             self._control_observation[3 * self.num_motors:3 * self.num_motors + 4])
         delayed_roll_pitch_yaw = self._pybullet_client.getEulerFromQuaternion(
