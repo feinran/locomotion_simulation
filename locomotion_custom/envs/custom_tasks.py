@@ -131,7 +131,7 @@ class DirectionTask(BaseTask):
         forward = np.array([rot_mat[i] for i in [0, 3]])  # direction where the robot is looking at
     
         if env.rendering_enabled:
-            debug_lines(self.current_base_pos, env, forward, None, dir)
+            debug_lines(self.current_base_pos, env, forward, None, direction_sensor.target_direction)
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
         movement_dot = self.similarity_func(dir, change)
@@ -181,7 +181,7 @@ class DirectionSpeedTask(BaseTask):
             magnitude = speed - np.linalg.norm(dir - velocity)
             
         if env.rendering_enabled:
-            self.debug_lines(self.current_base_pos, env, forward, velocity, dir)
+            self.debug_lines(self.current_base_pos, env, forward, velocity, direction_sensor.target_direction)
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
         movement_dot = np.dot(dir, change)
