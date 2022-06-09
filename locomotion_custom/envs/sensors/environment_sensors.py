@@ -21,6 +21,7 @@ import glob
 import json
 
 from scipy.spatial.transform import Rotation
+from sklearn.neighbors import VALID_METRICS_SPARSE
 from callbacks import create_buckets
 
 from locomotion_simulation.locomotion_custom.envs.sensors import sensor
@@ -42,15 +43,17 @@ class LastActionSensor(sensor.BoxSpaceSensor):
                  common_data_path: typing.Text = "") -> None:
         """Constructs LastActionSensor.
 
-    Args:
-      num_actions: the number of actions to read
-      lower_bound: the lower bound of the actions
-      upper_bound: the upper bound of the actions
-      name: the name of the sensor
-      dtype: data type of sensor value
-    """
+        Args:
+            num_actions: the number of actions to read
+            lower_bound: the lower bound of the actions
+            upper_bound: the upper bound of the actions
+            name: the name of the sensor
+            dtype: data type of sensor value
+        """
         self._num_actions = num_actions
         self._env = None
+        self._last_action = np.zeros(self._num_actions)
+        self.counter = 0
 
         super(LastActionSensor, self).__init__(name=name,
                                                shape=(self._num_actions,),
@@ -62,14 +65,21 @@ class LastActionSensor(sensor.BoxSpaceSensor):
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
 
-    Args:
-      env: the environment who invokes this callback function.
-    """
+        Args:
+            env: the environment who invokes this callback function.
+        """
         self._env = env
-
+        action_space = self._env.action_space.shape
+        self._last_actions = np.zeros((self._num_actions, action_space))
+        self.counter = 0
+        
+    def on_step(self, env):
+        self._last_action[self.counter] = self._env.last_action
+        self.counter += 1
+        
     def _get_observation(self) -> _ARRAY:
         """Returns the last action of the environment."""
-        return self._env.last_action
+        return self._last_actions.flatten()
 
 
 class CameraArraySensor(sensor.BoxSpaceSensor):
@@ -176,6 +186,187 @@ class CameraArraySensor(sensor.BoxSpaceSensor):
 
 
 class DirectionSensor(sensor.BoxSpaceSensor):
+    """A sensor that reports the direction that the robot should move to."""
+
+    def __init__(self,
+                 speed: float = None,
+                 distribution: typing.Text = "left_right",
+                 mean: float = 0,
+                 std: float = 0,
+                 lower_bound: _FLOAT_OR_ARRAY = -1.0,
+                 upper_bound: _FLOAT_OR_ARRAY = 1.0,
+                 name: typing.Text = "Direction",
+                 dtype: typing.Type[typing.Any] = np.float64,
+                 common_data_path: typing.Text = "") -> None:
+        """Constructs LastActionSensor.
+
+        Args:
+        lower_bound: the lower bound of the actions
+        upper_bound: the upper bound of the actions
+        name: the name of the sensor
+        dtype: data type of sensor value
+        """
+        self._speed = speed
+        self._distribution = distribution
+        self._mean = mean
+        self._std = std
+        self._direction = np.zeros(2)
+        self._angle = 0
+        self._env = None
+        self._buckets = np.ones(8) # are needed for adapted sampling, is a list with rewards against 360 degree
+        
+        super().__init__(name=name,
+                        shape=(2,),
+                        lower_bound=lower_bound,
+                        upper_bound=upper_bound,
+                        dtype=dtype,
+                        common_data_path=common_data_path)
+
+    def __sample_angle(self):
+        angle = 0
+        # decide wich distribution we will use
+        if self._distribution == "left_right":
+            if np.random.rand() > 0.5:
+                angle = np.random.normal(3 * np.pi / 2, np.pi / 4)
+            else:
+                angle = np.random.normal(np.pi / 2, np.pi / 4)
+        elif self._distribution == "uniform":
+            angle = np.random.uniform(0, 2 * np.pi)
+        elif self._distribution == "normal":
+            angle = np.random.normal(self._mean, self._std)
+        elif self._distribution == "adapted":
+            # get minimal bucket to zero
+            min_weight = min(self._buckets)
+            buckets =  self._buckets + min_weight
+            # normalize buckets
+            buckets /= buckets.sum()
+            # get reverse propability
+            buckets = 1 - buckets
+            # normalize reversed propability
+            bucket_sampling_weights = buckets / buckets.sum()
+            bucket_idx = np.random.choice(list(range(len(self._buckets))), p=bucket_sampling_weights) 
+            # get lowe / upper limit for uniform sampling
+            angels_per_bucket = 2 * np.pi / len(self._buckets)
+            lower = bucket_idx * angels_per_bucket
+            higher = (bucket_idx + 1) * angels_per_bucket
+            
+            # sample angel from bucket uniformly
+            angle = np.random.uniform(lower, higher)
+            
+        return angle
+    
+    def __update_buckets(self):
+        """
+        1. load data_json 
+        2. if there is no json -> buckets = np.ones(8)
+        3. get angels and reward_acc
+        4. create buckets
+        """
+        # get latest eval_data_file
+        max_iter = 0
+        steps = 0
+        eval_data_file = ""
+        for name in glob.glob(self.get_common_data_path() + "/eval_data_*"):
+            steps = int(name.split("_")[-2])
+            if steps > max_iter:
+                max_iter = steps
+                eval_data_file = name
+                
+        if max_iter == 0:
+            return np.ones(8)
+                
+        # load json
+        file = open(eval_data_file)
+        data = json.load(file)
+        
+        return create_buckets(36, data["Direction"]["angle"], data["reward_acc"])
+
+    @staticmethod
+    def __retrieve_2D_angle(vector):
+        """returns the angle where the vector is pointing at 
+
+        Args:
+            vector (_type_): 2D Vector. np.linalg.norm(vector) = 1
+        """
+        
+        if np.arcsin(vector[1]) >= 0:
+            return np.arccos(vector[0])
+        else:
+            return 2 * np.pi - np.arccos(vector[0])
+        
+    @staticmethod
+    def __create_direction(angle):
+        """returns a normed direction vector
+
+        Args:
+            angle (float): is a angel in the interval [0,2 * pi)
+
+        Returns:
+            np.array: normed direction vector
+        """
+        return np.array([np.cos(angle), np.sin(angle)])
+    
+    
+    def on_reset(self, env):
+        """From the callback, the sensor remembers the environment.
+
+        Args:
+        env: the environment who invokes this callback function.
+        """
+        self._env = env
+        
+        self._buckets = self.__update_buckets()
+        
+        # get sampled angle
+        self._angle = self.__sample_angle()
+        
+        self.on_step(env)
+        # create direction vector
+        self._direction = self.__create_direction(self._angle)
+
+        # multiply the normed direction vector with the speed
+        if self._speed is not None:
+            self._direction *= self._speed
+            
+    def on_step(self, env):
+        # update env
+        self._env = env
+        
+        # get current true robot orientation
+        # robot = self._env.get_attr("robot")[0]
+        rot_quat = env.robot.GetTrueBaseOrientation()
+        rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
+        forward = np.array([rot_mat[i] for i in [0, 3]]) 
+        current_robot_angle = self.__retrieve_2D_angle(forward)
+        
+        angle_dist = self._angle - current_robot_angle
+        
+        # create direction vector
+        self._direction = self.__create_direction(self._angle)
+
+
+    def _get_observation(self) -> _ARRAY:
+        """
+        Returns where the robot should move to.
+        """
+        return self._direction
+    
+    @property
+    def angle(self):
+        return self._angle
+    
+    @property
+    def buckets(self):
+        return self._buckets
+    
+    @buckets.setter
+    def buckets(self, value):
+        print("setter is called with: ", len(value))
+        self._buckets = value
+        
+
+
+class DirectionSensorOld(sensor.BoxSpaceSensor):
     """A sensor that reports the direction that the robot should move to."""
 
     def __init__(self,
