@@ -212,6 +212,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         self._std = std
         self._direction = np.zeros(2)
         self._angle = 0
+        self._rel_angle = 0
         self._env = None
         self._buckets = np.ones(8) # are needed for adapted sampling, is a list with rewards against 360 degree
         
@@ -295,7 +296,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
             return 2 * np.pi - np.arccos(vector[0])
         
     @staticmethod
-    def __create_direction(angle):
+    def create_direction(angle):
         """returns a normed direction vector
 
         Args:
@@ -305,7 +306,6 @@ class DirectionSensor(sensor.BoxSpaceSensor):
             np.array: normed direction vector
         """
         return np.array([np.cos(angle), np.sin(angle)])
-    
     
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
@@ -319,14 +319,9 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         
         # get sampled angle
         self._angle = self.__sample_angle()
+        self._rel_angle = self._angle
         
         self.on_step(env)
-        # create direction vector
-        self._direction = self.__create_direction(self._angle)
-
-        # multiply the normed direction vector with the speed
-        if self._speed is not None:
-            self._direction *= self._speed
             
     def on_step(self, env):
         # update env
@@ -339,10 +334,13 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         forward = np.array([rot_mat[i] for i in [0, 3]]) 
         current_robot_angle = self.__retrieve_2D_angle(forward)
         
-        angle_dist = self._angle - current_robot_angle
+        self._rel_angle = self._angle - current_robot_angle
         
         # create direction vector
-        self._direction = self.__create_direction(self._angle)
+        self._direction = self.create_direction(self._rel_angle)
+        
+        print(env.robot.GetBaseVelocity())
+        print(env.robot.GetFootContacts())
 
 
     def _get_observation(self) -> _ARRAY:
@@ -355,6 +353,22 @@ class DirectionSensor(sensor.BoxSpaceSensor):
     def angle(self):
         return self._angle
     
+    @property
+    def rel_angle(self):
+        return self._rel_angle
+    
+    @property
+    def direction(self):
+        return self._direction
+    
+    @property
+    def target_direction(self):
+        return self.create_direction(self._angle)
+    
+    @property
+    def rel_direction(self):
+        return self.create_direction(self._rel_angle)
+
     @property
     def buckets(self):
         return self._buckets
@@ -500,3 +514,47 @@ class DirectionSensorOld(sensor.BoxSpaceSensor):
     def buckets(self, value):
         print("setter is called with: ", len(value))
         self._buckets = value
+        
+        
+class SpeedSensor(sensor.BoxSpaceSensor):
+    """A sensor that reports the direction that the robot should move to."""
+
+    def __init__(self,
+                 target_speed: float = None,
+                 lower_bound: _FLOAT_OR_ARRAY = -100.0,
+                 upper_bound: _FLOAT_OR_ARRAY = 100.0,
+                 name: typing.Text = "Speed",
+                 dtype: typing.Type[typing.Any] = np.float64,
+                 common_data_path: typing.Text = "") -> None:
+        """Constructs LastActionSensor.
+
+        Args:
+        lower_bound: the lower bound of the actions
+        upper_bound: the upper bound of the actions
+        name: the name of the sensor
+        dtype: data type of sensor value
+        """
+        self._target_speed = target_speed
+        self._env = None
+        self._current_speed = 0
+        
+        super().__init__(name=name,
+                        shape=(1,),
+                        lower_bound=lower_bound,
+                        upper_bound=upper_bound,
+                        dtype=dtype,
+                        common_data_path=common_data_path)
+    
+    def __get_speed_diff(self):
+        return self._current_speed - self._target_speed
+    
+    def on_reset(self, env):
+        self._env = env
+        self._current_speed = 0
+    
+    def on_step(self, env):
+        # calcualte current robot speed
+        self._current_speed = np.linalg.norm(env.robot.GetBaseVelocity())
+    
+    def get_observation(self) -> np.ndarray:
+        self.__get_speed_diff()
