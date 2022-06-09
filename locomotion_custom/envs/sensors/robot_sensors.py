@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Simple sensors related to the robot."""
+from multiprocessing.dummy import Array
 import numpy as np
 import typing
 
@@ -366,3 +367,25 @@ class PoseSensor(sensor.BoxSpaceSensor):
   def _get_observation(self) -> _ARRAY:
     return np.concatenate((self._robot.GetBasePosition()[:2],
                            (self._robot.GetTrueBaseRollPitchYaw()[2],)))
+
+
+class TorqueSensor(sensor.BoxSpaceSensor):
+  """ A Sensor that returns the energy consumption of the robot"""
+  
+  def __init__(self, 
+               name: typing.Text = "TorqueSensor", 
+               shape: typing.Tuple[int, ...] = (12, ), 
+               lower_bound: _FLOAT_OR_ARRAY = -100,
+               upper_bound: _FLOAT_OR_ARRAY = 100,
+               noisy_reading: bool = True,) -> None:
+    super(TorqueSensor, self).__init__(name,
+                                       shape,
+                                       lower_bound,
+                                       upper_bound)
+    self.noisy_reading = noisy_reading
+    
+    def _get_observation(self) -> _ARRAY:
+      if self.noisy_reading:
+        return self._robot.GetMotorTorques()
+      else:
+        return self._robot.GetTrueMotorTorques()
