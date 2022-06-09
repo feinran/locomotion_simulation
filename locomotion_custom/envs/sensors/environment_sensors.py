@@ -340,7 +340,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         self._direction = self.create_direction(self._rel_angle)
         
         print(env.robot.GetBaseVelocity())
-        print(env.robot.GetFootContacts())
+        print(np.array(env.robot.GetFootContacts()).astype(int))
 
 
     def _get_observation(self) -> _ARRAY:
@@ -517,7 +517,7 @@ class DirectionSensorOld(sensor.BoxSpaceSensor):
         
         
 class SpeedSensor(sensor.BoxSpaceSensor):
-    """A sensor that reports the direction that the robot should move to."""
+    """A sensor that reports the speed that the robot should move to."""
 
     def __init__(self,
                  target_speed: float = None,
@@ -526,7 +526,7 @@ class SpeedSensor(sensor.BoxSpaceSensor):
                  name: typing.Text = "Speed",
                  dtype: typing.Type[typing.Any] = np.float64,
                  common_data_path: typing.Text = "") -> None:
-        """Constructs LastActionSensor.
+        """Constructs SpeedsSensor.
 
         Args:
         lower_bound: the lower bound of the actions
@@ -558,3 +558,37 @@ class SpeedSensor(sensor.BoxSpaceSensor):
     
     def get_observation(self) -> np.ndarray:
         self.__get_speed_diff()
+
+class FootContactSensor(sensor.BoxSpaceSensor):
+    """which feet are actually touching the ground and which not"""
+
+    def __init__(self,
+                 lower_bound: _FLOAT_OR_ARRAY = 0,
+                 upper_bound: _FLOAT_OR_ARRAY = 1,
+                 name: typing.Text = "FootContact",
+                 dtype: typing.Type[typing.Any] = np.float64) -> None:
+        """Constructs FootContanctSensor.
+
+        Args:
+        lower_bound: the lower bound of the actions
+        upper_bound: the upper bound of the actions
+        name: the name of the sensor
+        dtype: data type of sensor value
+        """
+        self._env = None
+        self._foot_contacts = np.zeros(4)    
+        super().__init__(name=name,
+                        shape=(4,),
+                        lower_bound=lower_bound,
+                        upper_bound=upper_bound,
+                        dtype=dtype)
+    
+    def on_reset(self, env):
+        self._foot_contacts = np.zeros(4)
+        
+    def on_step(self, env):
+        # calcualte current robot speed
+        self._foot_contacts = np.array(env.robot.GetFootContacts())
+    
+    def get_observation(self) -> np.ndarray:
+        self._foot_contacts.astype(int)
