@@ -458,4 +458,4 @@ class FootPositionSensor(sensor.BoxSpaceSensor):
         self._foot_positions = np.array(env.robot.GetFootPositionInBaseFrame())  
     
     def get_observation(self) -> np.ndarray:
-        self._foot_positions
+        self._foot_positions.flatten()
