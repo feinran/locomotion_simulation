@@ -339,9 +339,9 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         # create direction vector
         self._direction = self.create_direction(self._rel_angle)
         
-        print(env.robot.GetBaseVelocity())
+        # print(env.robot.GetBaseVelocity())
         print(np.array(env.robot.GetFootContacts()).astype(int))
-
+        print(np.array(env.robot.GetFootPositionsInBaseFrame()))
 
     def _get_observation(self) -> _ARRAY:
         """
@@ -592,3 +592,38 @@ class FootContactSensor(sensor.BoxSpaceSensor):
     
     def get_observation(self) -> np.ndarray:
         self._foot_contacts.astype(int)
+
+
+class FootPositionSensor(sensor.BoxSpaceSensor):
+    """Where are the end point of the robot feet relative to the robot base"""
+
+    def __init__(self,
+                 lower_bound: _FLOAT_OR_ARRAY = 0,
+                 upper_bound: _FLOAT_OR_ARRAY = 1,
+                 name: typing.Text = "FootPosition",
+                 dtype: typing.Type[typing.Any] = np.float64) -> None:
+        """Constructs FootPositionSensor.
+
+        Args:
+        lower_bound: the lower bound of the actions
+        upper_bound: the upper bound of the actions
+        name: the name of the sensor
+        dtype: data type of sensor value
+        """
+        self._env = None
+        self._foot_positions = np.zeros((4, 3))    
+        super().__init__(name=name,
+                        shape=(4, 3),
+                        lower_bound=lower_bound,
+                        upper_bound=upper_bound,
+                        dtype=dtype)
+    
+    def on_reset(self, env):
+        self._foot_positions = np.zeros((4, 3))  
+        
+    def on_step(self, env):
+        # calcualte current robot speed
+        self._foot_positions = np.array(env.robot.GetFootPositionInBaseFrame())  
+    
+    def get_observation(self) -> np.ndarray:
+        self._foot_positions
