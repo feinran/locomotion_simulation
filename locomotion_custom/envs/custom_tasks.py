@@ -143,6 +143,62 @@ class DirectionTask(BaseTask):
 
 
 class DirectionSpeedTask(BaseTask):
+    """Returns reward depending on the direction"""
+    def __init__(self, 
+                 similarity_func_name: str, 
+                 l_move: float = None, 
+                 l_align: float = None, 
+                 l_speed: float = None):
+        super().__init__()
+        self.similarity_func_name = similarity_func_name
+        self.l_move = l_move
+        self.l_align = l_align
+        self.l_speed = l_speed
+        
+    def similarity_func(self, v1, v2, l):
+        if self.similarity_func_name.lower() == "rbf":
+            rbf_value = np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * l**2))  # returns are in range [0, 1]
+            return 2 * rbf_value -1  # to make it comparable to dot_prod
+
+        elif self.similarity_func_name.lower() == "dot":
+            return np.dot(v1, v2)
+        
+    def reward(self, env: LocomotionGymEnv):
+        """
+        Get the reward without side effects.
+        """
+
+        # get sensor data
+        direction_sensor = env.sensor_by_name("Direction")
+        dir = direction_sensor.direction
+
+        speed_sensor = env.sensor_by_name("Speed")
+        current_speed = speed_sensor.current_speed
+        target_speed = speed_sensor.target_speed
+        
+        # how far the robot has moved
+        change = np.array(self.current_base_pos[:2]) - np.array(self.last_base_pos[:2])
+        magnitude = np.linalg.norm(change)
+        change = change / magnitude  # normalized move direction
+
+        rot_quat = env.robot.GetTrueBaseOrientation()
+        rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
+        forward = np.array([rot_mat[i] for i in [0, 3]])  # direction where the robot is looking at
+    
+        if env.rendering_enabled:
+            debug_lines(self.current_base_pos, env, forward, None, direction_sensor.target_direction)
+
+        dir = dir / np.linalg.norm(dir)  # normalized target direction
+        movement_dot = self.similarity_func(dir, change, self.l_move)
+        movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
+        alignment_dot = self.similarity_func(dir, forward, self.l_align)
+        alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
+        speed_reward = self.similarity_func(current_speed, target_speed, self.l_speed)
+        alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
+
+        return movement_reward + alignment_reward + alignment_reward
+
+class DirectionSpeedTaskOld(BaseTask):
     def __init__(self):
         super().__init__()
         self.base_velocity = np.zeros(3)
