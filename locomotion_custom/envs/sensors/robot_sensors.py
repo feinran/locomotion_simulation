@@ -384,11 +384,11 @@ class TorqueSensor(sensor.BoxSpaceSensor):
                                        upper_bound)
     self.noisy_reading = noisy_reading
     
-    def _get_observation(self) -> _ARRAY:
-      if self.noisy_reading:
-        return self._robot.GetMotorTorques()
-      else:
-        return self._robot.GetTrueMotorTorques()
+  def _get_observation(self) -> _ARRAY:
+    if self.noisy_reading:
+      return self._robot.GetMotorTorques()
+    else:
+      return self._robot.GetTrueMotorTorques()
 
 
 class FootContactSensor(sensor.BoxSpaceSensor):
@@ -408,22 +408,14 @@ class FootContactSensor(sensor.BoxSpaceSensor):
         dtype: data type of sensor value
         """
         self._env = None
-        self._foot_contacts = np.zeros(4)    
         super(FootContactSensor, self).__init__(name=name,
                                                 shape=(4,),
                                                 lower_bound=lower_bound,
                                                 upper_bound=upper_bound,
                                                 dtype=dtype)
     
-    def on_reset(self, env):
-        self._foot_contacts = np.zeros(4)
-        
-    def on_step(self, env):
-        # calcualte current robot speed
-        self._foot_contacts = np.array(self._robot.GetFootContacts())
-    
-    def get_observation(self) -> np.ndarray:
-        self._foot_contacts.astype(int)
+    def _get_observation(self) -> np.ndarray:
+        return np.array(self._robot.GetFootContacts()).astype(int)
 
 
 class FootPositionSensor(sensor.BoxSpaceSensor):
@@ -443,19 +435,11 @@ class FootPositionSensor(sensor.BoxSpaceSensor):
         dtype: data type of sensor value
         """
         self._env = None
-        self._foot_positions = np.zeros((4, 3))    
+        self._foot_positions = np.zeros((12,))    
         super(FootPositionSensor, self).__init__(name=name,
                                                  shape=(4, 3),
                                                  lower_bound=lower_bound,
                                                  upper_bound=upper_bound,
                                                  dtype=dtype)
-    
-    def on_reset(self):
-        self._foot_positions = np.zeros((4, 3))  
-        
-    def on_step(self):
-        # calcualte current robot speed
-        self._foot_positions = np.array(self._robot.GetFootPositionInBaseFrame())  
-    
-    def get_observation(self) -> np.ndarray:
-        self._foot_positions.flatten()
+    def _get_observation(self) -> np.ndarray:
+        return np.array(self._robot.GetFootPositionsInBaseFrame()).flatten()
