@@ -186,7 +186,7 @@ class CameraArraySensor(sensor.BoxSpaceSensor):
 
 
 class DirectionSensor(sensor.BoxSpaceSensor):
-    """A sensor that reports the direction that the robot should move to."""
+    """A sensor that reports the relative direction that the robot should move to."""
 
     def __init__(self,
                  speed: float = None,
@@ -292,7 +292,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         data = json.load(file)
         
         return create_buckets(num_buckets = 36, 
-                              angels = data["Direction"]["angle"], 
+                              angles = data["Direction"]["angle"], 
                               accs = data["reward_acc"],
                               lower_limit=self._lower_sampling_limit,
                               upper_limit=self._upper_sampling_limit)
@@ -456,6 +456,7 @@ class DirectionSensorOld(sensor.BoxSpaceSensor):
             buckets[logic1 * logic2] = 0
             # normalize reversed propability
             bucket_sampling_weights = buckets / buckets.sum()
+            bucket_sampling_weights = np.nan_to_num(bucket_sampling_weights)
             bucket_idx = np.random.choice(list(range(len(self._buckets))), p=bucket_sampling_weights) 
             
             # get lower / upper limit for uniform sampling
@@ -553,6 +554,7 @@ class SpeedSensor(sensor.BoxSpaceSensor):
         self._target_speed = target_speed
         self._env = None
         self._current_speed = 0
+        self._speed_diff = 0
         
         super().__init__(name=name,
                         shape=(1,),
@@ -562,7 +564,8 @@ class SpeedSensor(sensor.BoxSpaceSensor):
                         common_data_path=common_data_path)
     
     def __get_speed_diff(self):
-        return self._current_speed - self._target_speed
+        self._speed_diff = self._current_speed - self._target_speed 
+        return self._speed_diff
     
     def on_reset(self, env):
         self._env = env
@@ -575,3 +578,14 @@ class SpeedSensor(sensor.BoxSpaceSensor):
     def get_observation(self) -> np.ndarray:
         self.__get_speed_diff()
 
+    @property
+    def speed_diff(self):
+        return self._speed_diff
+
+    @property
+    def current_speed(self):
+        return self._current_speed
+
+    @property
+    def target_speed(self):
+        return self._target_speed
