@@ -49,8 +49,6 @@ def build_regular_env(robot_class,
                                    config["base_name"],
                                    config["algo_type"])
     
-    print(results_dir)
-    
     sim_params = locomotion_gym_config.SimulationParameters()
     sim_params.enable_rendering = enable_rendering
     sim_params.motor_control_mode = motor_control_mode
