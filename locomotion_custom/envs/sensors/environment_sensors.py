@@ -440,7 +440,7 @@ class DirectionSensorOld(sensor.BoxSpaceSensor):
             angle = np.random.uniform(0, 2 * np.pi)
         elif self.distribution == "normal":
             angle = np.random.normal(self.mean, self.std)
-        elif self.distribution == "adapted":
+        elif self._distribution == "adapted":
             # get minimal bucket to zero
             min_weight = min(self._buckets)
             buckets =  self._buckets + min_weight
@@ -448,17 +448,23 @@ class DirectionSensorOld(sensor.BoxSpaceSensor):
             buckets /= buckets.sum()
             # get reverse propability
             buckets = 1 - buckets
+            # cut of all buckets that do not lay inside the limits
+            # -> set the propability to zero
+            theta = np.linspace(0, 2*np.pi, len(buckets) + 1)[:-1]
+            logic1 = theta > self._upper_sampling_limit 
+            logic2 = theta < self._lower_sampling_limit
+            buckets[logic1 * logic2] = 0
             # normalize reversed propability
             bucket_sampling_weights = buckets / buckets.sum()
             bucket_idx = np.random.choice(list(range(len(self._buckets))), p=bucket_sampling_weights) 
-            # get lowe / upper limit for uniform sampling
+            
+            # get lower / upper limit for uniform sampling
             angels_per_bucket = 2 * np.pi / len(self._buckets)
-            lower = bucket_idx * angels_per_bucket
-            higher = (bucket_idx + 1) * angels_per_bucket
+            lower = bucket_idx * angels_per_bucket - angels_per_bucket  # is negaitve for idx = 0, take modulu 2pi after sampling
+            higher = (bucket_idx + 1) * angels_per_bucket - angels_per_bucket
             
             # sample angel from bucket uniformly
-            angle = np.random.uniform(lower, higher)
-            
+            angle = np.random.uniform(lower, higher) % (2 * np.pi)    
         return angle
     
     def __update_buckets(self):
@@ -495,7 +501,7 @@ class DirectionSensorOld(sensor.BoxSpaceSensor):
         """
         self._env = env
         
-        self.buckets = self.__update_buckets()
+        self._buckets = self.__update_buckets()
         
         # get sampled angle
         self._angle = self.__sample_angle()
@@ -523,7 +529,6 @@ class DirectionSensorOld(sensor.BoxSpaceSensor):
     
     @buckets.setter
     def buckets(self, value):
-        print("setter is called with: ", len(value))
         self._buckets = value
         
         
