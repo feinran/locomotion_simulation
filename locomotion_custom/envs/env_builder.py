@@ -18,6 +18,7 @@ from helper import generate_names
 
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_env
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_config
+from locomotion_simulation.locomotion_custom.envs import sensors
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
     observation_dictionary_to_array_wrapper as obs_dict_to_array_wrapper
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
@@ -63,11 +64,19 @@ def build_regular_env(robot_class,
     gym_config = locomotion_gym_config.LocomotionGymConfig(
         simulation_parameters=sim_params)
 
-    sensors = [
-        robot_sensors.BaseDisplacementSensor(),
-        robot_sensors.IMUSensor(),
-        robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-    ]
+    # sensors = [
+    #     robot_sensors.BaseDisplacementSensor(),
+    #     robot_sensors.IMUSensor(),
+    #     robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
+    # ]
+    sensors = []
+    sensor_classes = dict(getmembers(robot_sensors, isclass))
+    for sensor, parameters in env_config['robot_sensors'].items():
+        parameters = parameters.copy()
+        if parameters.pop('enabled'):
+            sensor_class = sensor_classes[sensor]
+            sensor = sensor_class(**parameters)
+            sensors.append(sensor)
 
     env_sensors = []
     sensor_classes = dict(getmembers(environment_sensors, isclass))
