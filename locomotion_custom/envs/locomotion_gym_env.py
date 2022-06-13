@@ -142,10 +142,18 @@ class LocomotionGymEnv(gym.Env):
                 self.all_sensors()))
         
         
+        # =====================================================================
+        # custom logging infos
+        # =====================================================================
         # for evaluation callback
         self._reward_acc = 0
         self._energy_acc = 0
         self._current_rollout_step = 0
+        
+        # reward_info section
+        self._move_reward_acc = 0
+        self._align_reward_acc = 0
+        self._speed_reward_acc = 0
 
     def _build_action_space(self):
         """Builds action space based on motor control mode."""
@@ -292,6 +300,11 @@ class LocomotionGymEnv(gym.Env):
         
         self._current_rollout_step = 0
         
+        # reward_info section
+        self._move_reward_acc = 0
+        self._align_reward_acc = 0
+        self._speed_reward_acc = 0
+        
         return self._get_observation()
 
     def step(self, action):
@@ -351,6 +364,23 @@ class LocomotionGymEnv(gym.Env):
             self._task.update(self)
 
         reward = self._reward()
+        
+        # update reward info
+        move_reward = self._task.move_reward
+        if move_reward is not None:
+            self._move_reward_acc += move_reward
+        else:
+            self._move_reward_acc = None
+        align_reward = self._task.align_reward
+        if align_reward is not None:
+            self._align_reward_acc += align_reward
+        else:
+            self._align_reward_acc = None
+        speed_reward = self._task.speed_reward
+        if speed_reward is not None:
+            self._speed_reward_acc += speed_reward
+        else:
+            self._speed_reward_acc = None
         
         # update accumulators
         self._reward_acc += reward
@@ -564,3 +594,16 @@ class LocomotionGymEnv(gym.Env):
     @property
     def current_rollout_step(self):
         return self._current_rollout_step
+    
+    # rewar info getter
+    @property
+    def move_reward_acc(self):
+        return self._move_reward_acc
+    
+    @property
+    def align_reward_acc(self):
+        return self._align_reward_acc
+    
+    @property
+    def speed_reward_acc(self):
+        return self._speed_reward_acc
