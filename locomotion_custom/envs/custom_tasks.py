@@ -60,6 +60,18 @@ class BaseTask():
         """Get the reward without side effects."""
         del env
         return self.current_base_pos[0] - self.last_base_pos[0]
+    
+    @property
+    def move_reward(self):
+        return None
+    
+    @property
+    def align_reward(self):
+        return None
+    
+    @property
+    def speed_reward(self):
+        return None
 
 
 class EnergyTask(BaseTask):
@@ -104,6 +116,9 @@ class DirectionTask(BaseTask):
         self.similarity_func_name = similarity_func_name
         self.l = l
         
+        self._move_dot = 0 
+        self._align_dot = 0
+        
     def similarity_func(self, v1, v2):
         if self.similarity_func_name.lower() == "rbf":
             rbf_value = np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * self.l**2))
@@ -139,7 +154,18 @@ class DirectionTask(BaseTask):
         alignment_dot = self.similarity_func(dir, forward)
         alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
 
+        self._move_dot = movement_dot
+        self._align_dot = alignment_dot
+        
         return movement_reward + alignment_reward
+    
+    @property
+    def move_reward(self):
+        return self._move_dot
+    
+    @property
+    def align_reward(self):
+        return self._align_dot
 
 
 class DirectionSpeedTask(BaseTask):
@@ -154,6 +180,10 @@ class DirectionSpeedTask(BaseTask):
         self.l_move = l_move
         self.l_align = l_align
         self.l_speed = l_speed
+        
+        self._move_reward = 0
+        self._align_reward = 0
+        self._speed_reward = 0
         
     def similarity_func(self, v1, v2, l):
         if self.similarity_func_name.lower() == "rbf":
@@ -190,13 +220,26 @@ class DirectionSpeedTask(BaseTask):
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
         movement_dot = self.similarity_func(dir, change, self.l_move)
-        movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
         alignment_dot = self.similarity_func(dir, forward, self.l_align)
-        alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
         speed_reward = self.similarity_func(current_speed, target_speed, self.l_speed)
-        alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
 
-        return movement_reward + alignment_reward + alignment_reward
+        self._move_dot = movement_dot
+        self._align_dot = alignment_dot
+        self._speed_dot = speed_reward
+        
+        return movement_dot + alignment_dot + speed_reward
+    
+    @property
+    def move_reward(self):
+        return self._move_dot
+    
+    @property
+    def align_reward(self):
+        return self._align_dot
+    
+    @property
+    def speed_reward(self):
+        return self._speed_dot
 
 class DirectionSpeedTaskOld(BaseTask):
     def __init__(self):
