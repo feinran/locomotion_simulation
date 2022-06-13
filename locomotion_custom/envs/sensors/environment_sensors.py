@@ -576,7 +576,7 @@ class SpeedSensor(sensor.BoxSpaceSensor):
         self._current_speed = np.linalg.norm(env.robot.GetBaseVelocity())
     
     def get_observation(self) -> np.ndarray:
-        self.__get_speed_diff()
+        return self.__get_speed_diff()
 
     @property
     def speed_diff(self):
