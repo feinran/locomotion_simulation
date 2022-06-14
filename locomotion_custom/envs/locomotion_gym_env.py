@@ -131,6 +131,7 @@ class LocomotionGymEnv(gym.Env):
         self._render_height = gym_config.simulation_parameters.render_height
 
         self._hard_reset = True
+        self._random_init_robot_position = True if self._config["init_robot_pos"] == "random" else False
         self.reset()
 
         self._hard_reset = gym_config.simulation_parameters.enable_hard_reset
@@ -270,7 +271,8 @@ class LocomotionGymEnv(gym.Env):
         # Reset the pose of the robot.
         self._robot.Reset(reload_urdf=False,
                           default_motor_angles=initial_motor_angles,
-                          reset_time=reset_duration)
+                          reset_time=reset_duration,
+                          random_position=self._random_init_robot_position)
 
         self._pybullet_client.setPhysicsEngineParameter(enableConeFriction=0)
         self._env_step_counter = 0

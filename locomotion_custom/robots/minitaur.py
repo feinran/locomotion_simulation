@@ -392,7 +392,7 @@ class Minitaur(object):
     """
         return True
 
-    def Reset(self, reload_urdf=True, default_motor_angles=None, reset_time=3.0):
+    def Reset(self, reload_urdf=True, default_motor_angles=None, reset_time=3.0, random_position: bool = False):
         """Reset the minitaur to its initial states.
 
     Args:
@@ -405,11 +405,26 @@ class Minitaur(object):
         reset_time <= 0 or in torque control mode, the phase of holding the
         default pose is skipped.
     """
+        # sample random position
+        salt = [0, 0, 0]
+        if random_position:
+            radius = np.random.uniform(0, 5)
+            theta = np.random.uniform(0, 2* np.pi)
+            salt[0] = np.cos(theta) * radius
+            salt[1] = np.sin(theta) * radius
+        print("salt: ", salt)
+        
+        # modifiy random position
+        init_position = self._GetDefaultInitPosition()
+        init_position[0] += salt[0]
+        init_position[1] += salt[1]
+        init_position[2] += salt[2] 
+        
         if reload_urdf:
             self._LoadRobotURDF()
             if self._on_rack:
                 self.rack_constraint = (self._CreateRackConstraint(
-                    self._GetDefaultInitPosition(), self._GetDefaultInitOrientation()))
+                    init_position, self._GetDefaultInitOrientation()))
             self._BuildJointNameToIdDict()
             self._BuildUrdfIds()
             self._RemoveDefaultJointDamping()
@@ -419,7 +434,7 @@ class Minitaur(object):
             self.ResetPose(add_constraint=True)
         else:
             self._pybullet_client.resetBasePositionAndOrientation(
-                self.quadruped, self._GetDefaultInitPosition(),
+                self.quadruped, init_position,
                 self._GetDefaultInitOrientation())
             self._pybullet_client.resetBaseVelocity(self.quadruped, [0, 0, 0],
                                                     [0, 0, 0])
