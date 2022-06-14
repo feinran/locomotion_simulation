@@ -264,7 +264,7 @@ class DirectionSensor(sensor.BoxSpaceSensor):
             
             # sample angel from bucket uniformly
             angle = np.random.uniform(lower, higher) % (2 * np.pi)
-            
+        
         return angle
     
     def __update_buckets(self):
@@ -389,7 +389,6 @@ class DirectionSensor(sensor.BoxSpaceSensor):
         print("setter is called with: ", len(value))
         self._buckets = value
         
-
 
 class DirectionSensorOld(sensor.BoxSpaceSensor):
     """A sensor that reports the direction that the robot should move to."""
