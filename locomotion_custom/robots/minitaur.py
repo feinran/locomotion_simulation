@@ -734,9 +734,9 @@ class Minitaur(object):
     def GetTrueMotorAngles(self):
         """Gets the eight motor angles at the current moment, mapped to [-pi, pi].
 
-    Returns:
-      Motor angles, mapped to [-pi, pi].
-    """
+        Returns:
+            Motor angles, mapped to [-pi, pi].
+        """
         motor_angles = [state[0] for state in self._joint_states]
         motor_angles = np.multiply(
             np.asarray(motor_angles) - np.asarray(self._motor_offset),
@@ -942,12 +942,12 @@ class Minitaur(object):
     def ConvertFromLegModel(self, actions):
         """Convert the actions that use leg model to the real motor actions.
 
-    Args:
-      actions: The theta, phi of the leg model.
+        Args:
+            actions: The theta, phi of the leg model.
 
-    Returns:
-      The eight desired motor angles that can be used in ApplyActions().
-    """
+        Returns:
+            The eight desired motor angles that can be used in ApplyActions().
+        """
         motor_angle = copy.deepcopy(actions)
         scale_for_singularity = 1
         offset_for_singularity = 1.5
@@ -984,14 +984,14 @@ class Minitaur(object):
     def SetBaseMasses(self, base_mass):
         """Set the mass of minitaur's base.
 
-    Args:
-      base_mass: A list of masses of each body link in CHASIS_LINK_IDS. The
-        length of this list should be the same as the length of CHASIS_LINK_IDS.
+        Args:
+            base_mass: A list of masses of each body link in CHASIS_LINK_IDS. The
+                length of this list should be the same as the length of CHASIS_LINK_IDS.
 
-    Raises:
-      ValueError: It is raised when the length of base_mass is not the same as
-        the length of self._chassis_link_ids.
-    """
+        Raises:
+            ValueError: It is raised when the length of base_mass is not the same as
+                the length of self._chassis_link_ids.
+        """
         if len(base_mass) != len(self._chassis_link_ids):
             raise ValueError(
                 "The length of base_mass {} and self._chassis_link_ids {} are not "
@@ -1004,17 +1004,17 @@ class Minitaur(object):
     def SetLegMasses(self, leg_masses):
         """Set the mass of the legs.
 
-    A leg includes leg_link and motor. 4 legs contain 16 links (4 links each)
-    and 8 motors. First 16 numbers correspond to link masses, last 8 correspond
-    to motor masses (24 total).
+        A leg includes leg_link and motor. 4 legs contain 16 links (4 links each)
+        and 8 motors. First 16 numbers correspond to link masses, last 8 correspond
+        to motor masses (24 total).
 
-    Args:
-      leg_masses: The leg and motor masses for all the leg links and motors.
+        Args:
+            leg_masses: The leg and motor masses for all the leg links and motors.
 
-    Raises:
-      ValueError: It is raised when the length of masses is not equal to number
-        of links + motors.
-    """
+        Raises:
+            ValueError: It is raised when the length of masses is not equal to number
+                of links + motors.
+        """
         if len(leg_masses) != len(self._leg_link_ids) + len(self._motor_link_ids):
             raise ValueError("The number of values passed to SetLegMasses are "
                              "different than number of leg links and motors.")
@@ -1031,16 +1031,16 @@ class Minitaur(object):
     def SetBaseInertias(self, base_inertias):
         """Set the inertias of minitaur's base.
 
-    Args:
-      base_inertias: A list of inertias of each body link in CHASIS_LINK_IDS.
-        The length of this list should be the same as the length of
-        CHASIS_LINK_IDS.
+        Args:
+            base_inertias: A list of inertias of each body link in CHASIS_LINK_IDS.
+                The length of this list should be the same as the length of
+                CHASIS_LINK_IDS.
 
-    Raises:
-      ValueError: It is raised when the length of base_inertias is not the same
-        as the length of self._chassis_link_ids and base_inertias contains
-        negative values.
-    """
+        Raises:
+            ValueError: It is raised when the length of base_inertias is not the same
+                as the length of self._chassis_link_ids and base_inertias contains
+                negative values.
+        """
         if len(base_inertias) != len(self._chassis_link_ids):
             raise ValueError(
                 "The length of base_inertias {} and self._chassis_link_ids {} are "
@@ -1057,17 +1057,17 @@ class Minitaur(object):
     def SetLegInertias(self, leg_inertias):
         """Set the inertias of the legs.
 
-    A leg includes leg_link and motor. 4 legs contain 16 links (4 links each)
-    and 8 motors. First 16 numbers correspond to link inertia, last 8 correspond
-    to motor inertia (24 total).
+        A leg includes leg_link and motor. 4 legs contain 16 links (4 links each)
+        and 8 motors. First 16 numbers correspond to link inertia, last 8 correspond
+        to motor inertia (24 total).
 
-    Args:
-      leg_inertias: The leg and motor inertias for all the leg links and motors.
+        Args:
+            leg_inertias: The leg and motor inertias for all the leg links and motors.
 
-    Raises:
-      ValueError: It is raised when the length of inertias is not equal to
-      the number of links + motors or leg_inertias contains negative values.
-    """
+        Raises:
+            ValueError: It is raised when the length of inertias is not equal to
+                the number of links + motors or leg_inertias contains negative values.
+        """
 
         if len(leg_inertias) != len(self._leg_link_ids) + len(
                 self._motor_link_ids):
@@ -1093,10 +1093,10 @@ class Minitaur(object):
     def SetFootFriction(self, foot_friction):
         """Set the lateral friction of the feet.
 
-    Args:
-      foot_friction: The lateral friction coefficient of the foot. This value is
-        shared by all four feet.
-    """
+        Args:
+            foot_friction: The lateral friction coefficient of the foot. This value is
+                shared by all four feet.
+        """
         for link_id in self._foot_link_ids:
             self._pybullet_client.changeDynamics(self.quadruped,
                                                  link_id,
@@ -1105,10 +1105,10 @@ class Minitaur(object):
     def SetFootRestitution(self, foot_restitution):
         """Set the coefficient of restitution at the feet.
 
-    Args:
-      foot_restitution: The coefficient of restitution (bounciness) of the feet.
-        This value is shared by all four feet.
-    """
+        Args:
+            foot_restitution: The coefficient of restitution (bounciness) of the feet.
+                This value is shared by all four feet.
+        """
         for link_id in self._foot_link_ids:
             self._pybullet_client.changeDynamics(self.quadruped,
                                                  link_id,
