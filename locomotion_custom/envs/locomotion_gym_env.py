@@ -154,6 +154,7 @@ class LocomotionGymEnv(gym.Env):
         self._move_reward_acc = 0
         self._align_reward_acc = 0
         self._speed_reward_acc = 0
+        self._energy_reward_acc = 0
 
     def _build_action_space(self):
         """Builds action space based on motor control mode."""
@@ -304,6 +305,7 @@ class LocomotionGymEnv(gym.Env):
         self._move_reward_acc = 0
         self._align_reward_acc = 0
         self._speed_reward_acc = 0
+        self._energy_reward_acc = 0
         
         return self._get_observation()
 
@@ -381,11 +383,16 @@ class LocomotionGymEnv(gym.Env):
             self._speed_reward_acc += speed_reward
         else:
             self._speed_reward_acc = None
+        energy_reward = self._task.energy_reward
+        # this energy logging is independet of upodate accumulators
+        if energy_reward is not None:
+            self._energy_reward_acc += energy_reward
+        else:
+            self._energy_reward_acc = None
         
         # update accumulators
         self._reward_acc += reward
         self._energy_acc += self._robot.GetEnergyConsumptionPerControlStep()
-        
         self._current_rollout_step += 1
 
         done = self._termination()
@@ -607,3 +614,7 @@ class LocomotionGymEnv(gym.Env):
     @property
     def speed_reward_acc(self):
         return self._speed_reward_acc
+    
+    @property
+    def energy_reward_acc(self):
+        return self._energy_reward_acc

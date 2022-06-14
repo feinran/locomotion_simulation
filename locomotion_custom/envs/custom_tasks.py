@@ -111,17 +111,35 @@ class EnergyTask(BaseTask):
 
 class DirectionTask(BaseTask):
     """Returns reward depending on the direction"""
-    def __init__(self, similarity_func_name, l: float = None):
+    def __init__(self, 
+                 energy_enable: bool = False,
+                 similarity_func_name: str = "dot", 
+                 l_move: float = None,
+                 l_align: float = None,
+                 w_move: float = 1,
+                 w_align: float = 1,
+                 w_energy: float = 1):
         super().__init__()
         self.similarity_func_name = similarity_func_name
-        self.l = l
+        self._l_move = l_move
+        self._l_align = l_align
         
+        # weights
+        self._w_move = float(w_move)
+        self._w_align = float(w_align)
+        self._w_energy = float(w_energy)
+        
+        # log data
         self._move_dot = 0 
         self._align_dot = 0
+        self._energy = 0
         
-    def similarity_func(self, v1, v2):
+        # additional energy option
+        self._energy_enable = energy_enable
+    
+    def similarity_func(self, v1, v2, l):
         if self.similarity_func_name.lower() == "rbf":
-            rbf_value = np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * self.l**2))
+            rbf_value = np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * l**2))
             return 2 * rbf_value -1  # to make it comparable to dot_prod
 
         elif self.similarity_func_name.lower() == "dot":
@@ -144,20 +162,30 @@ class DirectionTask(BaseTask):
         rot_quat = env.robot.GetTrueBaseOrientation()
         rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
         forward = np.array([rot_mat[i] for i in [0, 3]])  # direction where the robot is looking at
-    
+        
+        # energy consumption
+        energy_consumption = None
+        if self._energy_enable:
+            energy_consumption = env.robot.GetEnergyConsumptionPerControlStep()
+        
+        # render debug lines
         if env.rendering_enabled:
             debug_lines(self.current_base_pos, env, forward, None, direction_sensor.target_direction)
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
-        movement_dot = self.similarity_func(dir, change)
+        movement_dot = self.similarity_func(dir, change, self._l_move)
         movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
-        alignment_dot = self.similarity_func(dir, forward)
+        alignment_dot = self.similarity_func(dir, forward, self._l_align)
         alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
-
+        energy_reward = - energy_consumption if energy_consumption is not None else 0
+        
         self._move_dot = movement_dot
         self._align_dot = alignment_dot
+        self._energy = energy_consumption
         
-        return movement_reward + alignment_reward
+        return self._w_move * movement_reward + \
+                self._w_align * alignment_reward + \
+                self._w_energy * energy_reward
     
     @property
     def move_reward(self):
@@ -166,24 +194,45 @@ class DirectionTask(BaseTask):
     @property
     def align_reward(self):
         return self._align_dot
+    
+    @property
+    def energy_reward(self):
+        return self._energy
+
 
 
 class DirectionSpeedTask(BaseTask):
     """Returns reward depending on the direction"""
     def __init__(self, 
-                 similarity_func_name: str, 
+                 energy_enable: bool = False,
+                 similarity_func_name: str = "dot", 
                  l_move: float = None, 
                  l_align: float = None, 
-                 l_speed: float = None):
+                 l_speed: float = None,
+                 w_move: float = 1,
+                 w_align: float = 1,
+                 w_speed: float = 1,
+                 w_energy: float = 1,):
         super().__init__()
         self.similarity_func_name = similarity_func_name
-        self.l_move = l_move
-        self.l_align = l_align
-        self.l_speed = l_speed
+        self._l_move = l_move
+        self._l_align = l_align
+        self._l_speed = l_speed
         
+        # weights
+        self._w_move = float(w_move)
+        self._w_align = float(w_align)
+        self._w_speed = float(w_speed)
+        self._w_energy = float(w_energy)
+        
+        # log data
         self._move_reward = 0
         self._align_reward = 0
         self._speed_reward = 0
+        self._energy = 0
+        
+        # additional energy option
+        self._energy_enable = energy_enable
         
     def similarity_func(self, v1, v2, l):
         if self.similarity_func_name.lower() == "rbf":
@@ -214,20 +263,33 @@ class DirectionSpeedTask(BaseTask):
         rot_quat = env.robot.GetTrueBaseOrientation()
         rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
         forward = np.array([rot_mat[i] for i in [0, 3]])  # direction where the robot is looking at
-    
+        
+        # energy consumption
+        energy_consumption = None
+        if self._energy_enable:
+            energy_consumption = env.robot.GetEnergyConsumptionPerControlStep()
+        
+        # render debug lines 
         if env.rendering_enabled:
             debug_lines(self.current_base_pos, env, forward, None, direction_sensor.target_direction)
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
-        movement_dot = self.similarity_func(dir, change, self.l_move)
-        alignment_dot = self.similarity_func(dir, forward, self.l_align)
-        speed_reward = self.similarity_func(current_speed, target_speed, self.l_speed)
-
+        
+        # compute rewards
+        movement_dot = self.similarity_func(dir, change, self._l_move)
+        alignment_dot = self.similarity_func(dir, forward, self._l_align)
+        speed_reward = self.similarity_func(current_speed, target_speed, self._l_speed)
+        energy_reward = - energy_consumption if energy_consumption is not None else 0
+        
         self._move_dot = movement_dot
         self._align_dot = alignment_dot
         self._speed_dot = speed_reward
+        self._energy = energy_consumption
         
-        return movement_dot + alignment_dot + speed_reward
+        return self._w_move * movement_dot + \
+                self._w_align * alignment_dot + \
+                self._w_speed * speed_reward + \
+                self._w_energy * energy_reward
     
     @property
     def move_reward(self):
@@ -240,6 +302,10 @@ class DirectionSpeedTask(BaseTask):
     @property
     def speed_reward(self):
         return self._speed_dot
+    
+    @property
+    def energy_reward(self):
+        return self._energy
 
 class DirectionSpeedTaskOld(BaseTask):
     def __init__(self):
