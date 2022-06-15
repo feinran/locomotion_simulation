@@ -237,6 +237,9 @@ class IMUSensor(sensor.BoxSpaceSensor):
     self._channels = channels if channels else ["R", "P", "dR", "dP"]
     self._num_channels = len(self._channels)
     self._noisy_reading = noisy_reading
+    
+    self.rpy = np.zeros(3)
+    self.drpy = np.zeros(3)
 
     # Compute the default lower and upper bounds
     if lower_bound is None and upper_bound is None:
@@ -276,14 +279,22 @@ class IMUSensor(sensor.BoxSpaceSensor):
     """Returns box-shape data type."""
     return self._datatype
 
-  def _get_observation(self) -> _ARRAY:
+  def update(self):
     if self._noisy_reading:
       rpy = self._robot.GetBaseRollPitchYaw()
       drpy = self._robot.GetBaseRollPitchYawRate()
     else:
       rpy = self._robot.GetTrueBaseRollPitchYaw()
       drpy = self._robot.GetTrueBaseRollPitchYawRate()
-
+      
+    self.rpy = rpy
+    self.drpy = drpy
+    
+    return rpy, drpy
+  
+  def _get_observation(self) -> _ARRAY:
+    rpy, drpy = self.update()
+    
     assert len(rpy) >= 3, rpy
     assert len(drpy) >= 3, drpy
 
@@ -315,6 +326,33 @@ class IMUSensor(sensor.BoxSpaceSensor):
         observations[i] = drpy[2]
         
     return observations
+  
+  @property
+  def roll(self):
+    return self.rpy[0]
+  
+  @property
+  def pitch(self):
+    return self.rpy[1]
+  
+  @property
+  def yaw(self):
+    return self.rpy[2]
+  
+  @property
+  def roll_rate(self):
+    return self.drpy[0]
+  
+  @property
+  def pitch_rate(self):
+    return self.drpy[1]
+  
+  @property
+  def yaw_rate(self):
+    return self.drpy[2]
+  
+
+
 
 class BasePositionSensor(sensor.BoxSpaceSensor):
   """A sensor that reads the base position of the Minitaur robot."""

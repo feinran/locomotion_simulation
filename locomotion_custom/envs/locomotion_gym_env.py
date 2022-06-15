@@ -307,7 +307,7 @@ class LocomotionGymEnv(gym.Env):
         self._move_reward_acc = 0
         self._align_reward_acc = 0
         self._speed_reward_acc = 0
-        self._energy_reward_acc = 0
+        self._energy_reward_acc = 0 
         
         return self._get_observation()
 
