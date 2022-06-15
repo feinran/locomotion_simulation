@@ -336,7 +336,7 @@ class LocomotionGymEnv(gym.Env):
         """
         self._last_base_position = self._robot.GetBasePosition()
         self._last_action = action
-
+        
         if self._is_render:
             # Sleep, otherwise the computation takes less time than real time,
             # which will make the visualization like a fast-forward video.
