@@ -412,7 +412,6 @@ class Minitaur(object):
             theta = np.random.uniform(0, 2* np.pi)
             salt[0] = np.cos(theta) * radius
             salt[1] = np.sin(theta) * radius
-        print("salt: ", salt)
         
         # modifiy random position
         init_position = self._GetDefaultInitPosition()
