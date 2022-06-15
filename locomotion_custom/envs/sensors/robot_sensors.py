@@ -313,6 +313,7 @@ class IMUSensor(sensor.BoxSpaceSensor):
         observations[i] = drpy[1]
       if channel == "dY":
         observations[i] = drpy[2]
+        
     return observations
 
 class BasePositionSensor(sensor.BoxSpaceSensor):
