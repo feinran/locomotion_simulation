@@ -207,6 +207,38 @@ class BaseDisplacementSensor(sensor.BoxSpaceSensor):
     self._current_base_position = np.array(self._robot.GetBasePosition())
     self._last_yaw = self._current_yaw
     self._current_yaw = self._robot.GetBaseRollPitchYaw()[2]
+    
+  @property
+  def dx(self):
+    dx, _, _ = self._current_base_position - self._last_base_position
+    return dx
+  
+  @property
+  def dy(self):
+    _, dy, _ = self._current_base_position - self._last_base_position
+    return dy
+  
+  @property
+  def dz(self):
+    _, _, dz = self._current_base_position - self._last_base_position
+    return dz
+  
+  @property
+  def dx_local(self):
+    dx, dy, _ = self._current_base_position - self._last_base_position
+    dx_local = np.cos(self._last_yaw) * dx + np.sin(self._last_yaw) * dy
+    return dx_local
+  
+  @property
+  def dy_local(self):
+    dx, dy, _ = self._current_base_position - self._last_base_position
+    dy_local = -np.sin(self._last_yaw) * dx + np.cos(self._last_yaw) * dy
+    return dy
+  
+  @property
+  def dz_local(self):
+    _, _, dz = self._current_base_position - self._last_base_position
+    return dz
 
 class IMUSensor(sensor.BoxSpaceSensor):
   """An IMU sensor that reads orientations and angular velocities."""
