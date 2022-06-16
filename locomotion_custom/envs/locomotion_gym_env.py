@@ -401,7 +401,7 @@ class LocomotionGymEnv(gym.Env):
         self._env_step_counter += 1
         if done:
             self._robot.Terminate()
-        
+            
         return self._get_observation(), reward, done, {}
 
     def render(self, mode='rgb_array'):
