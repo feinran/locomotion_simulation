@@ -414,7 +414,7 @@ class Minitaur(object):
             salt[1] = np.sin(theta) * radius
         
         # modifiy random position
-        init_position = self._GetDefaultInitPosition()
+        init_position = self._GetDefaultInitPosition().copy()
         init_position[0] += salt[0]
         init_position[1] += salt[1]
         init_position[2] += salt[2] 
