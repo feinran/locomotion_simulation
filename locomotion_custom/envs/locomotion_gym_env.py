@@ -274,6 +274,7 @@ class LocomotionGymEnv(gym.Env):
                           reset_time=reset_duration,
                           random_position=self._random_init_robot_position)
 
+        self._init_robot_position = self._robot.GetBasePosition()
         self._pybullet_client.setPhysicsEngineParameter(enableConeFriction=0)
         self._env_step_counter = 0
         if reset_visualization_camera:
@@ -604,7 +605,7 @@ class LocomotionGymEnv(gym.Env):
     def current_rollout_step(self):
         return self._current_rollout_step
     
-    # rewar info getter
+    # reward info getter
     @property
     def move_reward_acc(self):
         return self._move_reward_acc
@@ -620,3 +621,7 @@ class LocomotionGymEnv(gym.Env):
     @property
     def energy_reward_acc(self):
         return self._energy_reward_acc
+
+    @property
+    def distance_from_origin(self):
+        return np.linalg.norm(np.array(self._robot.GetBasePosition()) - np.array(self._init_robot_position))
