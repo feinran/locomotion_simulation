@@ -247,19 +247,16 @@ class DirectionSpeedTask(BaseTask):
         Get the reward without side effects.
         """
 
-        # get sensor data
+        # get direction sensor data
         direction_sensor = env.sensor_by_name("Direction")
         dir = direction_sensor.direction
 
+        # get speed sensor data
         speed_sensor = env.sensor_by_name("Speed")
         current_speed = speed_sensor.current_speed
         target_speed = speed_sensor.target_speed
         
-        # how far the robot has moved
-        change = np.array(self.current_base_pos[:2]) - np.array(self.last_base_pos[:2])
-        magnitude = np.linalg.norm(change)
-        change = change / magnitude  # normalized move direction
-
+        # get rot matrix to convert from global coordinates to local coordinates
         rot_quat = env.robot.GetTrueBaseOrientation()
         rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
         forward = np.array([rot_mat[i] for i in [0, 3]])  # direction where the robot is looking at
@@ -273,11 +270,15 @@ class DirectionSpeedTask(BaseTask):
         if env.rendering_enabled:
             debug_lines(self.current_base_pos, env, forward, None, direction_sensor.target_direction)
 
-        dir = dir / np.linalg.norm(dir)  # normalized target direction
+        # get base velocity in local frame
+        rot_mat = np.reshape(np.array(rot_mat), (3, 3))
+        global_velocity = np.array(env.robot.GetBaseVelocity())
+        local_velocity = np.matmul(rot_mat, global_velocity)[:-1]
         
         # compute rewards
-        movement_dot = self.similarity_func(dir, change, self._l_move)
-        alignment_dot = self.similarity_func(dir, forward, self._l_align)
+        # TODO: check on sanity
+        movement_dot = self.similarity_func(dir, local_velocity, self._l_move)
+        alignment_dot = self.similarity_func(dir, direction_sensor.create_direction(0), self._l_align)
         speed_reward = self.similarity_func(current_speed, target_speed, self._l_speed)
         energy_reward = - energy_consumption if energy_consumption is not None else 0
         
