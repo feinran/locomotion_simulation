@@ -631,8 +631,8 @@ class Minitaur(object):
 
         This function mimicks the noisy sensor reading and adds latency.
         Returns:
-        A tuple (roll, pitch, yaw) of the base in world frame polluted by noise
-        and latency.
+            A tuple (roll, pitch, yaw) of the base in world frame polluted by noise
+            and latency.
         """
         delayed_orientation = np.array(
             self._control_observation[3 * self.num_motors:3 * self.num_motors + 4])
@@ -650,15 +650,15 @@ class Minitaur(object):
                                                 foot_local_position):
         """Use IK to compute the motor angles, given the foot link's local position.
 
-    Args:
-      leg_id: The leg index.
-      foot_local_position: The foot link's position in the base frame.
+        Args:
+            leg_id: The leg index.
+            foot_local_position: The foot link's position in the base frame.
 
-    Returns:
-      A tuple. The position indices and the angles for all joints along the
-      leg. The position indices is consistent with the joint orders as returned
-      by GetMotorAngles API.
-    """
+        Returns:
+            A tuple. The position indices and the angles for all joints along the
+            leg. The position indices is consistent with the joint orders as returned
+            by GetMotorAngles API.
+        """
         assert len(self._foot_link_ids) == self.num_legs
         toe_id = self._foot_link_ids[leg_id]
 
