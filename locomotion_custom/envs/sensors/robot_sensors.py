@@ -233,7 +233,7 @@ class BaseDisplacementSensor(sensor.BoxSpaceSensor):
   def dy_local(self):
     dx, dy, _ = self._current_base_position - self._last_base_position
     dy_local = -np.sin(self._last_yaw) * dx + np.cos(self._last_yaw) * dy
-    return dy
+    return dy_local
   
   @property
   def dz_local(self):
@@ -383,8 +383,6 @@ class IMUSensor(sensor.BoxSpaceSensor):
   def yaw_rate(self):
     return self.drpy[2]
   
-
-
 
 class BasePositionSensor(sensor.BoxSpaceSensor):
   """A sensor that reads the base position of the Minitaur robot."""
