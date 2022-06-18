@@ -72,6 +72,10 @@ class BaseTask():
     @property
     def speed_reward(self):
         return None
+    
+    @property
+    def energy_reward(self):
+        return None
 
 
 class EnergyTask(BaseTask):
