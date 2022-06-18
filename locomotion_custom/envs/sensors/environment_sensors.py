@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Simple sensors related to the environment."""
+from matplotlib.pyplot import hist
 import numpy as np
 import typing
 from typing import Tuple
@@ -51,8 +52,7 @@ class LastActionSensor(sensor.BoxSpaceSensor):
             dtype: data type of sensor value
         """
         self._num_actions = num_actions
-        self._env = None
-        self._last_action = np.zeros(self._num_actions)
+        self._last_actions = np.zeros(self._num_actions)
         self.counter = 0
 
         super(LastActionSensor, self).__init__(name=name,
@@ -68,18 +68,17 @@ class LastActionSensor(sensor.BoxSpaceSensor):
         Args:
             env: the environment who invokes this callback function.
         """
-        self._env = env
-        action_space = self._env.action_space.shape
+        action_space = env.action_space.shape[0]  # is a one dimmensinal tuple
         self._last_actions = np.zeros((self._num_actions, action_space))
-        self.counter = 0
         
     def on_step(self, env):
-        self._last_action[self.counter] = self._env.last_action
-        self.counter += 1
+        history = self._last_action[:-1]
+        last_action = np.array([env.last_action])
+        self._last_actions = np.concatenate((last_action, history), axis=0)
         
     def _get_observation(self) -> _ARRAY:
         """Returns the last action of the environment."""
-        return self._last_actions.flatten()
+        return self._last_actions
 
 
 class CameraArraySensor(sensor.BoxSpaceSensor):
