@@ -121,7 +121,8 @@ class DirectionTask(BaseTask):
                  l_align: float = None,
                  w_move: float = 1,
                  w_align: float = 1,
-                 w_energy: float = 1):
+                 w_energy: float = 1,
+                 w_alive: float = 0):
         super().__init__()
         self.similarity_func_name = similarity_func_name
         self._l_move = l_move
@@ -131,6 +132,7 @@ class DirectionTask(BaseTask):
         self._w_move = float(w_move)
         self._w_align = float(w_align)
         self._w_energy = float(w_energy)
+        self._w_alive = float(w_alive)
         
         # log data
         self._move_dot = 0 
@@ -188,7 +190,9 @@ class DirectionTask(BaseTask):
         
         return self._w_move * movement_reward + \
                 self._w_align * alignment_reward + \
-                self._w_energy * energy_reward
+                self._w_energy * energy_reward + \
+                self._w_alive
+                
     
     @property
     def move_reward(self):
@@ -215,7 +219,8 @@ class DirectionSpeedTask(BaseTask):
                  w_move: float = 1,
                  w_align: float = 1,
                  w_speed: float = 1,
-                 w_energy: float = 1,):
+                 w_energy: float = 1,
+                 w_alive: float = 0):
         super().__init__()
         self.similarity_func_name = similarity_func_name
         self._l_move = l_move
@@ -227,6 +232,7 @@ class DirectionSpeedTask(BaseTask):
         self._w_align = float(w_align)
         self._w_speed = float(w_speed)
         self._w_energy = float(w_energy)
+        self._w_alive = float(w_alive)
         
         # log data
         self._move_reward = 0
@@ -293,7 +299,8 @@ class DirectionSpeedTask(BaseTask):
         return self._w_move * movement_dot + \
                 self._w_align * alignment_dot + \
                 self._w_speed * speed_reward + \
-                self._w_energy * energy_reward
+                self._w_energy * energy_reward + \
+                self._w_alive
     
     @property
     def move_reward(self):
