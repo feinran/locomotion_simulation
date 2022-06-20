@@ -21,6 +21,7 @@ from __future__ import print_function
 import numpy as np
 
 from locomotion_simulation.locomotion_custom.envs.locomotion_gym_env import LocomotionGymEnv
+from scheduler import Scheduler
 
 class BaseTask():
     """Default task."""
@@ -75,6 +76,18 @@ class BaseTask():
     @property
     def energy_reward(self):
         return None
+    
+    @property
+    def l_move(self):
+        return None
+
+    @property
+    def l_align(self):
+        return None
+
+    @property
+    def l_speed(self):
+        return None
 
 
 class EnergyTask(BaseTask):
@@ -119,14 +132,16 @@ class DirectionTask(BaseTask):
                  similarity_func_name: str = "dot", 
                  l_move: float = None,
                  l_align: float = None,
+                 move_decay: float = None,
+                 align_decay: float = None,
+                 l_move_limit: float = None,
+                 l_align_limit: float = None,
                  w_move: float = 1,
                  w_align: float = 1,
                  w_energy: float = 1,
                  w_alive: float = 0):
         super().__init__()
         self.similarity_func_name = similarity_func_name
-        self._l_move = l_move
-        self._l_align = l_align
         
         # weights
         self._w_move = float(w_move)
@@ -141,6 +156,18 @@ class DirectionTask(BaseTask):
         
         # additional energy option
         self._energy_enable = energy_enable
+        
+        self._l_move_scheduler = Scheduler(len_history=8,
+                                            value_init=l_move,
+                                            decay=move_decay,
+                                            upper_limit=l_move_limit,
+                                            lower_limit=-l_move_limit)
+        self._l_align_scheduler = Scheduler(len_history=8,
+                                            value_init=l_align,
+                                            decay=align_decay,
+                                            upper_limit=l_align_limit,
+                                            lower_limit=-l_align_limit)
+        
     
     def similarity_func(self, v1, v2, l):
         if self.similarity_func_name.lower() == "rbf":
@@ -149,6 +176,10 @@ class DirectionTask(BaseTask):
 
         elif self.similarity_func_name.lower() == "dot":
             return np.dot(v1, v2)
+        
+    def reset(self, env):
+        self._l_move_scheduler.roll_out_end()
+        self._l_align_scheduler.roll_out_end()
         
     def reward(self, env: LocomotionGymEnv):
         """
@@ -178,21 +209,25 @@ class DirectionTask(BaseTask):
             debug_lines(self.current_base_pos, env, forward, None, direction_sensor.target_direction)
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
-        movement_dot = self.similarity_func(dir, change, self._l_move)
+        movement_dot = self.similarity_func(dir, change, self._l_move_scheduler.value)
         movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
-        alignment_dot = self.similarity_func(dir, forward, self._l_align)
+        alignment_dot = self.similarity_func(dir, forward, self._l_align_scheduler.value)
         alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
         energy_reward = - energy_consumption if energy_consumption is not None else 0
         
+        # provide logging data
         self._move_dot = movement_dot
         self._align_dot = alignment_dot
         self._energy = energy_consumption
+        
+        # update scheduler
+        self._l_move_scheduler.update(last_performace=movement_dot)
+        self._l_align_scheduler.update(last_performace=alignment_dot)
         
         return self._w_move * movement_reward + \
                 self._w_align * alignment_reward + \
                 self._w_energy * energy_reward + \
                 self._w_alive
-                
     
     @property
     def move_reward(self):
@@ -204,8 +239,15 @@ class DirectionTask(BaseTask):
     
     @property
     def energy_reward(self):
-        return self._energy
+        return self._energy    
+    
+    @property
+    def l_move(self):
+        return self._l_move_scheduler.value
 
+    @property
+    def l_align(self):
+        return self._l_align_scheduler.value
 
 
 class DirectionSpeedTask(BaseTask):
@@ -216,6 +258,12 @@ class DirectionSpeedTask(BaseTask):
                  l_move: float = None, 
                  l_align: float = None, 
                  l_speed: float = None,
+                 move_decay: float = None,
+                 align_decay: float = None,
+                 speed_decay: float = None,
+                 l_move_limit: float = None,
+                 l_align_limit: float = None,
+                 l_speed_limit: float = None,
                  w_move: float = 1,
                  w_align: float = 1,
                  w_speed: float = 1,
@@ -223,10 +271,7 @@ class DirectionSpeedTask(BaseTask):
                  w_alive: float = 0):
         super().__init__()
         self.similarity_func_name = similarity_func_name
-        self._l_move = l_move
-        self._l_align = l_align
-        self._l_speed = l_speed
-        
+       
         # weights
         self._w_move = float(w_move)
         self._w_align = float(w_align)
@@ -243,6 +288,23 @@ class DirectionSpeedTask(BaseTask):
         # additional energy option
         self._energy_enable = energy_enable
         
+        history_length = 15
+        self._l_move_scheduler = Scheduler(len_history=history_length,
+                                            value_init=l_move,
+                                            decay=move_decay,
+                                            upper_limit=l_move_limit,
+                                            lower_limit=-l_move_limit)
+        self._l_align_scheduler = Scheduler(len_history=history_length,
+                                            value_init=l_align,
+                                            decay=align_decay,
+                                            upper_limit=l_align_limit,
+                                            lower_limit=-l_align_limit)
+        self._l_speed_scheduler = Scheduler(len_history=history_length,
+                                            value_init=l_speed,
+                                            decay=speed_decay,
+                                            upper_limit=l_speed_limit,
+                                            lower_limit=-l_speed_limit)
+        
     def similarity_func(self, v1, v2, l):
         if self.similarity_func_name.lower() == "rbf":
             rbf_value = np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * l**2))  # returns are in range [0, 1]
@@ -251,6 +313,12 @@ class DirectionSpeedTask(BaseTask):
         elif self.similarity_func_name.lower() == "dot":
             return np.dot(v1, v2)
         
+    
+    def reset(self, env):
+        self._l_move_scheduler.roll_out_end()
+        self._l_align_scheduler.roll_out_end()
+        self._l_speed_scheduler.roll_out_end()
+         
     def reward(self, env: LocomotionGymEnv):
         """
         Get the reward without side effects.
@@ -286,15 +354,21 @@ class DirectionSpeedTask(BaseTask):
         
         # compute rewards
         # TODO: check on sanity
-        movement_dot = self.similarity_func(dir, local_velocity, self._l_move)
-        alignment_dot = self.similarity_func(dir, direction_sensor.create_direction(0), self._l_align)
-        speed_reward = self.similarity_func(current_speed, target_speed, self._l_speed)
+        movement_dot = self.similarity_func(dir, local_velocity, self._l_move_scheduler.value)
+        alignment_dot = self.similarity_func(dir, direction_sensor.create_direction(0), self._l_align_scheduler.value)
+        speed_reward = self.similarity_func(current_speed, target_speed, self._l_speed_scheduler.value)
         energy_reward = - energy_consumption if energy_consumption is not None else 0
         
+        # provide logging data
         self._move_dot = movement_dot
         self._align_dot = alignment_dot
         self._speed_dot = speed_reward
         self._energy = energy_consumption
+        
+        # update scheduler
+        self._l_move_scheduler.update(last_performace=movement_dot)
+        self._l_align_scheduler.update(last_performace=alignment_dot)
+        self._l_speed_scheduler.update(last_performace=speed_reward)
         
         return self._w_move * movement_dot + \
                 self._w_align * alignment_dot + \
@@ -317,6 +391,19 @@ class DirectionSpeedTask(BaseTask):
     @property
     def energy_reward(self):
         return self._energy
+
+    @property
+    def l_move(self):
+        return self._l_move_scheduler.value
+
+    @property
+    def l_align(self):
+        return self._l_align_scheduler.value
+
+    @property
+    def l_speed(self):
+        return self._l_speed_scheduler.value
+
 
 class DirectionSpeedTaskOld(BaseTask):
     def __init__(self):

@@ -156,6 +156,10 @@ class LocomotionGymEnv(gym.Env):
         self._align_reward_acc = 0
         self._speed_reward_acc = 0
         self._energy_reward_acc = 0
+        
+        self._l_move = 0
+        self._l_align = 0
+        self._l_speed = 0
 
     def _build_action_space(self):
         """Builds action space based on motor control mode."""
@@ -294,6 +298,11 @@ class LocomotionGymEnv(gym.Env):
         if self._task and hasattr(self._task, 'reset'):
             self._task.reset(self)
 
+        # get new rbf kernel values 
+        self._l_move = self._task.l_move
+        self._l_align = self._task.l_align
+        self._l_speed = self._task.l_speed
+        
         # Loop over all env randomizers.
         for env_randomizer in self._env_randomizers:
             env_randomizer.randomize_env(self)
@@ -650,3 +659,15 @@ class LocomotionGymEnv(gym.Env):
     @property
     def distance_from_origin(self):
         return np.linalg.norm(np.array(self._robot.GetBasePosition()) - np.array(self._init_robot_position))
+    
+    @property
+    def l_move(self):
+        return self._l_move
+
+    @property
+    def l_align(self):
+        return self._l_align
+    
+    @property
+    def l_speed(self):
+        return self._l_speed
