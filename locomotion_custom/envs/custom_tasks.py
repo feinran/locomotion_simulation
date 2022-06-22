@@ -210,9 +210,9 @@ class DirectionTask(BaseTask):
 
         dir = dir / np.linalg.norm(dir)  # normalized target direction
         movement_dot = self.similarity_func(dir, change, self._l_move_scheduler.value)
-        movement_reward = np.sign(movement_dot) * magnitude * movement_dot * movement_dot
+        movement_reward = movement_dot * magnitude
         alignment_dot = self.similarity_func(dir, forward, self._l_align_scheduler.value)
-        alignment_reward = np.sign(alignment_dot) * magnitude * alignment_dot * alignment_dot
+        alignment_reward = alignment_dot * magnitude
         energy_reward = - energy_consumption if energy_consumption is not None else 0
         
         # provide logging data
@@ -353,7 +353,6 @@ class DirectionSpeedTask(BaseTask):
         local_velocity = np.matmul(rot_mat, global_velocity)[:-1]
         
         # compute rewards
-        # TODO: check on sanity
         movement_dot = self.similarity_func(dir, local_velocity, self._l_move_scheduler.value)
         alignment_dot = self.similarity_func(dir, direction_sensor.create_direction(0), self._l_align_scheduler.value)
         speed_reward = self.similarity_func(current_speed, target_speed, self._l_speed_scheduler.value)
