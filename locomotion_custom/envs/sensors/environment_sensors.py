@@ -56,7 +56,7 @@ class LastActionSensor(sensor.BoxSpaceSensor):
         self.counter = 0
 
         super(LastActionSensor, self).__init__(name=name,
-                                               shape=(self._num_actions,),
+                                               shape=(self._num_actions, 12),
                                                lower_bound=lower_bound,
                                                upper_bound=upper_bound,
                                                dtype=dtype,
@@ -69,10 +69,10 @@ class LastActionSensor(sensor.BoxSpaceSensor):
             env: the environment who invokes this callback function.
         """
         action_space = env.action_space.shape[0]  # is a one dimmensinal tuple
-        self._last_actions = np.zeros((self._num_actions, action_space))
+        self._last_actions = np.zeros((self._num_actions, 12))
         
     def on_step(self, env):
-        history = self._last_action[:-1]
+        history = self._last_actions[:-1]
         last_action = np.array([env.last_action])
         self._last_actions = np.concatenate((last_action, history), axis=0)
         
