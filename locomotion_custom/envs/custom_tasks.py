@@ -174,6 +174,9 @@ class DirectionTask(BaseTask):
             rbf_value = np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * l**2))
             return 2 * rbf_value -1  # to make it comparable to dot_prod
 
+        elif self.similarity_func_name.lower() == "ln":
+            return np.log(6 * np.abs(np.linalg.norm(v2 - v1)) + 0.36666)
+
         elif self.similarity_func_name.lower() == "dot":
             return np.dot(v1, v2)
         
@@ -309,6 +312,9 @@ class DirectionSpeedTask(BaseTask):
         if self.similarity_func_name.lower() == "rbf":
             rbf_value = np.exp2(- np.linalg.norm(v2 - v1)**2 / (2 * l**2))  # returns are in range [0, 1]
             return 2 * rbf_value -1  # to make it comparable to dot_prod
+
+        elif self.similarity_func_name.lower() == "ln":
+            return np.log(6 * np.abs(np.linalg.norm(v2 - v1)) + 0.36666)
 
         elif self.similarity_func_name.lower() == "dot":
             return np.dot(v1, v2)
