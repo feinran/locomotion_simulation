@@ -314,7 +314,7 @@ class DirectionSpeedTask(BaseTask):
             return 2 * rbf_value -1  # to make it comparable to dot_prod
 
         elif self.similarity_func_name.lower() == "ln":
-            return np.log(6 * np.abs(np.linalg.norm(v2 - v1)) + 0.36666)
+            return -np.log(6 * np.abs(np.linalg.norm(v2 - v1)) + 0.36666)
 
         elif self.similarity_func_name.lower() == "dot":
             return np.dot(v1, v2)
