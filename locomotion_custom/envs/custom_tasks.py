@@ -271,6 +271,7 @@ class DirectionSpeedTask(BaseTask):
                  w_align: float = 1,
                  w_speed: float = 1,
                  w_energy: float = 1,
+                 w_motor_limit_penalty: float = 0,
                  w_alive: float = 0):
         super().__init__()
         self.similarity_func_name = similarity_func_name
@@ -280,6 +281,7 @@ class DirectionSpeedTask(BaseTask):
         self._w_align = float(w_align)
         self._w_speed = float(w_speed)
         self._w_energy = float(w_energy)
+        self._w_motor_limit_penalty = -float(w_motor_limit_penalty)
         self._w_alive = float(w_alive)
         
         # log data
@@ -343,6 +345,13 @@ class DirectionSpeedTask(BaseTask):
         rot_quat = env.robot.GetTrueBaseOrientation()
         rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
         forward = np.array([rot_mat[i] for i in [0, 3]])  # direction where the robot is looking at
+
+
+        # calculate number of hip motors that exceed ther position limit  
+        threshold = 0.73
+        hip_motor_angles = np.array(env.robot.GetTrueMotorAngles())[::3]
+        hip_motor_limits = sum((hip_motor_angles > threshold) + \
+                               (hip_motor_angles < -threshold))
         
         # energy consumption
         energy_consumption = None
@@ -380,6 +389,7 @@ class DirectionSpeedTask(BaseTask):
                 self._w_align * alignment_dot + \
                 self._w_speed * speed_reward + \
                 self._w_energy * energy_reward + \
+                self._w_motor_limit_penalty * hip_motor_limits + \
                 self._w_alive
     
     @property
