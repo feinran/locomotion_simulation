@@ -357,9 +357,10 @@ class DirectionSpeedTask(BaseTask):
         rot_mat = np.reshape(np.array(rot_mat), (3, 3))
         global_velocity = np.array(env.robot.GetBaseVelocity())
         local_velocity = np.matmul(rot_mat, global_velocity)[:-1]
+        local_movement_dir = local_velocity / np.linalg.norm(local_velocity)
         
         # compute rewards
-        movement_dot = self.similarity_func(dir, local_velocity, self._l_move_scheduler.value)
+        movement_dot = self.similarity_func(dir, local_movement_dir, self._l_move_scheduler.value)
         alignment_dot = self.similarity_func(dir, direction_sensor.create_direction(0), self._l_align_scheduler.value)
         speed_reward = self.similarity_func(current_speed, target_speed, self._l_speed_scheduler.value)
         energy_reward = - energy_consumption if energy_consumption is not None else 0
