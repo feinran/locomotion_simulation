@@ -86,6 +86,15 @@ URDF_FILENAME = "a1/a1.urdf"
 _BODY_B_FIELD_NUMBER = 2
 _LINK_A_FIELD_NUMBER = 3
 
+# Set threshold for motors
+LOWER_THRESHOLD_HIP = -0.802851455917
+UPPER_THRESHOLD_HIP = 0.802851455917
+LOWER_THRESHOLD_UPPER = -1.0471975512
+UPPER_THRESHOLD_UPPER = 4.18879020479
+LOWER_THRESHOLD_LOWER = -2.69653369433
+UPPER_THRESHOLD_LOWER = -0.916297857297
+
+
 
 @numba.jit(nopython=True, cache=True)
 def foot_position_in_hip_frame_to_joint_angle(foot_position, l_hip_sign=1):
@@ -176,41 +185,41 @@ class A1(minitaur.Minitaur):
   MPC_VELOCITY_MULTIPLIER = 0.5
   ACTION_CONFIG = [
       locomotion_gym_config.ScalarField(name="FR_hip_motor",
-                                        upper_bound=0.802851455917,
-                                        lower_bound=-0.802851455917),
+                                        upper_bound=UPPER_THRESHOLD_HIP,
+                                        lower_bound=LOWER_THRESHOLD_HIP),
       locomotion_gym_config.ScalarField(name="FR_upper_joint",
-                                        upper_bound=4.18879020479,
-                                        lower_bound=-1.0471975512),
+                                        upper_bound=UPPER_THRESHOLD_UPPER,
+                                        lower_bound=LOWER_THRESHOLD_UPPER),
       locomotion_gym_config.ScalarField(name="FR_lower_joint",
-                                        upper_bound=-0.916297857297,
-                                        lower_bound=-2.69653369433),
+                                        upper_bound=UPPER_THRESHOLD_LOWER,
+                                        lower_bound=LOWER_THRESHOLD_LOWER),
       locomotion_gym_config.ScalarField(name="FL_hip_motor",
-                                        upper_bound=0.802851455917,
-                                        lower_bound=-0.802851455917),
+                                        upper_bound=UPPER_THRESHOLD_HIP,
+                                        lower_bound=LOWER_THRESHOLD_HIP),
       locomotion_gym_config.ScalarField(name="FL_upper_joint",
-                                        upper_bound=4.18879020479,
-                                        lower_bound=-1.0471975512),
+                                        upper_bound=UPPER_THRESHOLD_UPPER,
+                                        lower_bound=LOWER_THRESHOLD_UPPER),
       locomotion_gym_config.ScalarField(name="FL_lower_joint",
-                                        upper_bound=-0.916297857297,
-                                        lower_bound=-2.69653369433),
+                                        upper_bound=UPPER_THRESHOLD_LOWER,
+                                        lower_bound=LOWER_THRESHOLD_LOWER),
       locomotion_gym_config.ScalarField(name="RR_hip_motor",
-                                        upper_bound=0.802851455917,
-                                        lower_bound=-0.802851455917),
+                                        upper_bound=UPPER_THRESHOLD_HIP,
+                                        lower_bound=LOWER_THRESHOLD_HIP),
       locomotion_gym_config.ScalarField(name="RR_upper_joint",
-                                        upper_bound=4.18879020479,
-                                        lower_bound=-1.0471975512),
+                                        upper_bound=UPPER_THRESHOLD_UPPER,
+                                        lower_bound=LOWER_THRESHOLD_UPPER),
       locomotion_gym_config.ScalarField(name="RR_lower_joint",
-                                        upper_bound=-0.916297857297,
-                                        lower_bound=-2.69653369433),
+                                        upper_bound=UPPER_THRESHOLD_LOWER,
+                                        lower_bound=LOWER_THRESHOLD_LOWER),
       locomotion_gym_config.ScalarField(name="RL_hip_motor",
-                                        upper_bound=0.802851455917,
-                                        lower_bound=-0.802851455917),
+                                        upper_bound=UPPER_THRESHOLD_HIP,
+                                        lower_bound=LOWER_THRESHOLD_HIP),
       locomotion_gym_config.ScalarField(name="RL_upper_joint",
-                                        upper_bound=4.18879020479,
-                                        lower_bound=-1.0471975512),
+                                        upper_bound=UPPER_THRESHOLD_UPPER,
+                                        lower_bound=LOWER_THRESHOLD_UPPER),
       locomotion_gym_config.ScalarField(name="RL_lower_joint",
-                                        upper_bound=-0.916297857297,
-                                        lower_bound=-2.69653369433),
+                                        upper_bound=UPPER_THRESHOLD_LOWER,
+                                        lower_bound=LOWER_THRESHOLD_LOWER),
   ]
 
   def __init__(
@@ -301,13 +310,18 @@ class A1(minitaur.Minitaur):
     all_contacts = self._pybullet_client.getContactPoints(bodyA=self.quadruped)
 
     contacts = [False, False, False, False]
+    # print(self._leg_link_ids)
+    # print(self._foot_link_ids)
     for contact in all_contacts:
+      # print("contact: ", contact)
+      # print("quadruped: ", self.quadruped)
       # Ignore self contacts
       if contact[_BODY_B_FIELD_NUMBER] == self.quadruped:
         continue
       try:
         toe_link_index = self._foot_link_ids.index(
             contact[_LINK_A_FIELD_NUMBER])
+        # print("toe_link_index: ", toe_link_index)
         contacts[toe_link_index] = True
       except ValueError:
         continue

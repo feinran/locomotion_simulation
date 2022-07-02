@@ -21,6 +21,7 @@ from __future__ import print_function
 import numpy as np
 
 from locomotion_simulation.locomotion_custom.envs.locomotion_gym_env import LocomotionGymEnv
+from locomotion_simulation.locomotion_custom.robots.a1 import LOWER_THRESHOLD_HIP, LOWER_THRESHOLD_UPPER, UPPER_THRESHOLD_HIP, UPPER_THRESHOLD_LOWER, UPPER_THRESHOLD_UPPER, LOWER_THRESHOLD_LOWER
 from scheduler import Scheduler
 
 class BaseTask():
@@ -320,7 +321,13 @@ class DirectionSpeedTask(BaseTask):
 
         elif self.similarity_func_name.lower() == "dot":
             return np.dot(v1, v2)
+    
+    @staticmethod
+    def get_limit_violations(joint_angles, upper_limit, lower_limit):
+        upper_bool = joint_angles > upper_limit
+        lower_bool = joint_angles < lower_limit
         
+        return sum(upper_bool + lower_bool)
     
     def reset(self, env):
         self._l_move_scheduler.roll_out_end()
@@ -348,10 +355,25 @@ class DirectionSpeedTask(BaseTask):
 
 
         # calculate number of hip motors that exceed ther position limit  
-        threshold = 0.73
-        hip_motor_angles = np.array(env.robot.GetTrueMotorAngles())[::3]
-        hip_motor_limits = sum((hip_motor_angles > threshold) + \
-                               (hip_motor_angles < -threshold))
+        epsilon = 0.07
+        motor_angles = np.array(env.robot.GetTrueMotorAngles())
+        
+        hip_motor_angles = motor_angles[::3]
+        upper_limit = UPPER_THRESHOLD_HIP - epsilon
+        lower_limit = LOWER_THRESHOLD_HIP + epsilon
+        hip_motor_limits = self.get_limit_violations(hip_motor_angles, upper_limit, lower_limit)
+        
+        upper_motor_angles = motor_angles[1::3]
+        upper_limit = UPPER_THRESHOLD_UPPER - epsilon
+        lower_limit = LOWER_THRESHOLD_UPPER + epsilon
+        upper_motor_limits = self.get_limit_violations(upper_motor_angles, upper_limit, lower_limit)
+        
+        lower_motor_angles = motor_angles[2::3]
+        upper_limit = UPPER_THRESHOLD_LOWER - epsilon
+        lower_limit = LOWER_THRESHOLD_LOWER + epsilon
+        lower_motor_limits = self.get_limit_violations(lower_motor_angles, upper_limit, lower_limit)
+        
+        all_motor_violations = hip_motor_limits + upper_motor_limits + lower_motor_limits
         
         # energy consumption
         energy_consumption = None
@@ -389,7 +411,7 @@ class DirectionSpeedTask(BaseTask):
                 self._w_align * alignment_dot + \
                 self._w_speed * speed_reward + \
                 self._w_energy * energy_reward + \
-                self._w_motor_limit_penalty * hip_motor_limits + \
+                self._w_motor_limit_penalty * all_motor_violations + \
                 self._w_alive
     
     @property
