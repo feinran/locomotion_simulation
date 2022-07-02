@@ -68,7 +68,6 @@ class LastActionSensor(sensor.BoxSpaceSensor):
         Args:
             env: the environment who invokes this callback function.
         """
-        action_space = env.action_space.shape[0]  # is a one dimmensinal tuple
         self._last_actions = np.zeros((self._num_actions, 12))
         
     def on_step(self, env):
