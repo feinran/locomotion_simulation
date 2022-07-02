@@ -94,8 +94,6 @@ UPPER_THRESHOLD_UPPER = 4.18879020479
 LOWER_THRESHOLD_LOWER = -2.69653369433
 UPPER_THRESHOLD_LOWER = -0.916297857297
 
-
-
 @numba.jit(nopython=True, cache=True)
 def foot_position_in_hip_frame_to_joint_angle(foot_position, l_hip_sign=1):
   l_up = 0.2
