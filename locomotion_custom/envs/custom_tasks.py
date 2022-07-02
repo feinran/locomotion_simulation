@@ -273,7 +273,8 @@ class DirectionSpeedTask(BaseTask):
                  w_speed: float = 1,
                  w_energy: float = 1,
                  w_motor_limit_penalty: float = 0,
-                 w_alive: float = 0):
+                 w_alive: float = 0,
+                 motor_limit_epsilon: float = -0.001):
         super().__init__()
         self.similarity_func_name = similarity_func_name
        
@@ -310,6 +311,8 @@ class DirectionSpeedTask(BaseTask):
                                             decay=speed_decay,
                                             upper_limit=l_speed_limit,
                                             lower_limit=-l_speed_limit)
+        
+        self.motor_limit_epsilon = motor_limit_epsilon
         
     def similarity_func(self, v1, v2, l):
         if self.similarity_func_name.lower() == "rbf":
