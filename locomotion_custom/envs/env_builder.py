@@ -15,6 +15,7 @@
 """Utilities for building environments."""
 import sacred.utils
 from helper import generate_names
+import yaml
 
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_env
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_config
@@ -42,6 +43,11 @@ def build_regular_env(robot_class,
                       action_limit=(0.75, 0.75, 0.75),
                       wrap_trajectory_generator=True,
                       config={}):
+
+    if config == {}:
+        config_path = "base_config/config_1.yaml"
+        print(f"WARNING: no config found. loading default config ({config_path})")
+        config = yaml.safe_load(open(config_path))
     
     env_config = config["env"]
     _, results_dir, _= generate_names(config["results_dir"],

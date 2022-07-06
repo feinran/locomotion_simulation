@@ -273,6 +273,7 @@ class DirectionSpeedTask(BaseTask):
                  w_speed: float = 1,
                  w_energy: float = 1,
                  w_motor_limit_penalty: float = 0,
+                 w_nofoot_contacts_penalty: float = 0,
                  w_alive: float = 0,
                  motor_limit_epsilon: float = -0.001):
         super().__init__()
@@ -284,6 +285,7 @@ class DirectionSpeedTask(BaseTask):
         self._w_speed = float(w_speed)
         self._w_energy = float(w_energy)
         self._w_motor_limit_penalty = -float(w_motor_limit_penalty)
+        self._w_nofoot_contacts_penalty = -float(w_nofoot_contacts_penalty)
         self._w_alive = float(w_alive)
         
         # log data
@@ -356,6 +358,8 @@ class DirectionSpeedTask(BaseTask):
         rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
         forward = np.array([rot_mat[i] for i in [0, 3]])  # direction where the robot is looking at
 
+        # get number of contacts that are not foot contacts
+        nofoot_contacts = env.robot.nofoot_contacts
 
         # calculate number of hip motors that exceed ther position limit  
         epsilon = 0.07
@@ -417,6 +421,7 @@ class DirectionSpeedTask(BaseTask):
                 self._w_speed * speed_reward + \
                 self._w_energy * energy_reward + \
                 self._w_motor_limit_penalty * all_motor_violations + \
+                self._w_nofoot_contacts_penalty * nofoot_contacts + \
                 self._w_alive
     
     @property

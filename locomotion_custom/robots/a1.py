@@ -241,6 +241,7 @@ class A1(minitaur.Minitaur):
     self._urdf_filename = urdf_filename
     self._allow_knee_contact = allow_knee_contact
     self._enable_clip_motor_commands = enable_clip_motor_commands
+    self._nofoot_contacts = 0
 
     
     try:
@@ -335,6 +336,7 @@ class A1(minitaur.Minitaur):
   def GetFootContacts(self):
     all_contacts = self._pybullet_client.getContactPoints(bodyA=self.quadruped)
 
+    self._nofoot_contacts = 0
     contacts = [False, False, False, False]
     for contact in all_contacts:
       if contact[_BODY_B_FIELD_NUMBER] == self.quadruped:
@@ -344,6 +346,7 @@ class A1(minitaur.Minitaur):
             contact[_LINK_A_FIELD_NUMBER])
         contacts[toe_link_index] = True
       except ValueError:
+        self._nofoot_contacts += 1
         continue
 
     return contacts
@@ -531,3 +534,10 @@ class A1(minitaur.Minitaur):
     # Does not work for Minitaur which has the four bar mechanism for now.
     motor_angles = self.GetMotorAngles()[leg_id * 3:(leg_id + 1) * 3]
     return analytical_leg_jacobian(motor_angles, leg_id)
+
+  @property
+  def nofoot_contacts(self):
+    """Get the amount of contacts/collisions that did not involve the feet.
+    This is only computed when GetFootContacts is called.
+    """
+    return self._nofoot_contacts
