@@ -14,6 +14,7 @@
 # limitations under the License.
 """This file implements the locomotion gym env."""
 import collections
+from distutils.command.config import config
 import math
 import time
 import gym
@@ -270,7 +271,8 @@ class LocomotionGymEnv(gym.Env):
                 enable_action_interpolation=self._gym_config.simulation_parameters.
                     enable_action_interpolation,
                 allow_knee_contact=self._gym_config.simulation_parameters.
-                    allow_knee_contact)
+                    allow_knee_contact, 
+                config=self._config)
 
         # Reset the pose of the robot.
         self._robot.Reset(reload_urdf=False,

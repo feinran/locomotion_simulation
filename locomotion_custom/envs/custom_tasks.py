@@ -378,6 +378,8 @@ class DirectionSpeedTask(BaseTask):
         
         all_motor_violations = hip_motor_limits + upper_motor_limits + lower_motor_limits
         
+        # print("hitted limits: ", np.array([hip_motor_limits, upper_motor_limits, lower_motor_limits]))
+        
         # energy consumption
         energy_consumption = None
         if self._energy_enable:

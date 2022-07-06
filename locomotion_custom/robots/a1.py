@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Pybullet simulation of a Laikago robot."""
+from distutils.command.config import config
 import math
 import re
 import numba
@@ -235,21 +236,48 @@ class A1(minitaur.Minitaur):
       motor_control_mode=None,
       reset_time=1,
       allow_knee_contact=False,
+      config: dict = {}
   ):
     self._urdf_filename = urdf_filename
     self._allow_knee_contact = allow_knee_contact
     self._enable_clip_motor_commands = enable_clip_motor_commands
 
-    motor_kp = [
-        ABDUCTION_P_GAIN, HIP_P_GAIN, KNEE_P_GAIN, ABDUCTION_P_GAIN,
-        HIP_P_GAIN, KNEE_P_GAIN, ABDUCTION_P_GAIN, HIP_P_GAIN, KNEE_P_GAIN,
-        ABDUCTION_P_GAIN, HIP_P_GAIN, KNEE_P_GAIN
-    ]
-    motor_kd = [
-        ABDUCTION_D_GAIN, HIP_D_GAIN, KNEE_D_GAIN, ABDUCTION_D_GAIN,
-        HIP_D_GAIN, KNEE_D_GAIN, ABDUCTION_D_GAIN, HIP_D_GAIN, KNEE_D_GAIN,
-        ABDUCTION_D_GAIN, HIP_D_GAIN, KNEE_D_GAIN
-    ]
+    
+    try:
+      controll_params = config["env"]["robot_controller"]
+      
+      abduction_p_gain = controll_params["abduction_p_gain"]
+      abduction_d_gain = controll_params["abduction_d_gain"]
+      hip_p_gain = controll_params["hip_p_gain"]
+      hip_d_gain = controll_params["hip_d_gain"]
+      knee_p_gain = controll_params["knee_p_gain"]
+      knee_d_gain = controll_params["knee_d_gain"]
+      
+      motor_kp = [
+        abduction_p_gain, hip_p_gain, knee_p_gain,
+        abduction_p_gain, hip_p_gain, knee_p_gain,
+        abduction_p_gain, hip_p_gain, knee_p_gain,
+        abduction_p_gain, hip_p_gain, knee_p_gain
+        ]
+    
+      motor_kd = [
+        abduction_d_gain, hip_d_gain, knee_d_gain,
+        abduction_d_gain, hip_d_gain, knee_d_gain,
+        abduction_d_gain, hip_d_gain, knee_d_gain,
+        abduction_d_gain, hip_d_gain, knee_d_gain
+        ]
+    
+    except KeyError:
+      motor_kp = [
+          ABDUCTION_P_GAIN, HIP_P_GAIN, KNEE_P_GAIN, ABDUCTION_P_GAIN,
+          HIP_P_GAIN, KNEE_P_GAIN, ABDUCTION_P_GAIN, HIP_P_GAIN, KNEE_P_GAIN,
+          ABDUCTION_P_GAIN, HIP_P_GAIN, KNEE_P_GAIN
+      ]
+      motor_kd = [
+          ABDUCTION_D_GAIN, HIP_D_GAIN, KNEE_D_GAIN, ABDUCTION_D_GAIN,
+          HIP_D_GAIN, KNEE_D_GAIN, ABDUCTION_D_GAIN, HIP_D_GAIN, KNEE_D_GAIN,
+          ABDUCTION_D_GAIN, HIP_D_GAIN, KNEE_D_GAIN
+      ]
 
     super(A1, self).__init__(
         pybullet_client=pybullet_client,
@@ -308,18 +336,12 @@ class A1(minitaur.Minitaur):
     all_contacts = self._pybullet_client.getContactPoints(bodyA=self.quadruped)
 
     contacts = [False, False, False, False]
-    # print(self._leg_link_ids)
-    # print(self._foot_link_ids)
     for contact in all_contacts:
-      # print("contact: ", contact)
-      # print("quadruped: ", self.quadruped)
-      # Ignore self contacts
       if contact[_BODY_B_FIELD_NUMBER] == self.quadruped:
         continue
       try:
         toe_link_index = self._foot_link_ids.index(
             contact[_LINK_A_FIELD_NUMBER])
-        # print("toe_link_index: ", toe_link_index)
         contacts[toe_link_index] = True
       except ValueError:
         continue
