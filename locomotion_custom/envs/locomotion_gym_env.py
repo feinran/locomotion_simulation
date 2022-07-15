@@ -301,9 +301,12 @@ class LocomotionGymEnv(gym.Env):
             self._task.reset(self)
 
         # get new rbf kernel values 
-        self._l_move = self._task.l_move
-        self._l_align = self._task.l_align
-        self._l_speed = self._task.l_speed
+        if self._task and hasattr(self._task, 'l_move'):
+            self._l_move = self._task.l_move
+        if self._task and hasattr(self._task, 'l_align'):
+            self._l_align = self._task.l_align
+        if self._task and hasattr(self._task, 'l_speed'):
+            self._l_speed = self._task.l_speed
         
         # Loop over all env randomizers.
         for env_randomizer in self._env_randomizers:
@@ -382,27 +385,34 @@ class LocomotionGymEnv(gym.Env):
         reward = self._reward()
         
         # update reward info
-        move_reward = self._task.move_reward
-        if move_reward is not None:
-            self._move_reward_acc += move_reward
-        else:
-            self._move_reward_acc = None
-        align_reward = self._task.align_reward
-        if align_reward is not None:
-            self._align_reward_acc += align_reward
-        else:
-            self._align_reward_acc = None
-        speed_reward = self._task.speed_reward
-        if speed_reward is not None:
-            self._speed_reward_acc += speed_reward
-        else:
-            self._speed_reward_acc = None
-        energy_reward = self._task.energy_reward
-        # this energy logging is independet of upodate accumulators
-        if energy_reward is not None:
-            self._energy_reward_acc += energy_reward
-        else:
-            self._energy_reward_acc = None
+        if self._task and hasattr(self._task, 'move_reward'):
+            move_reward = self._task.move_reward
+            if move_reward is not None:
+                self._move_reward_acc += move_reward
+            else:
+                self._move_reward_acc = None
+
+        if self._task and hasattr(self._task, 'align_reward'):
+            align_reward = self._task.align_reward
+            if align_reward is not None:
+                self._align_reward_acc += align_reward
+            else:
+                self._align_reward_acc = None
+
+        if self._task and hasattr(self._task, 'speed_reward'):
+            speed_reward = self._task.speed_reward
+            if speed_reward is not None:
+                self._speed_reward_acc += speed_reward
+            else:
+                self._speed_reward_acc = None
+
+        if self._task and hasattr(self._task, 'energy_reward'):
+            energy_reward = self._task.energy_reward
+            # this energy logging is independet of upodate accumulators
+            if energy_reward is not None:
+                self._energy_reward_acc += energy_reward
+            else:
+                self._energy_reward_acc = None
         
         # update accumulators
         self._reward_acc += reward
