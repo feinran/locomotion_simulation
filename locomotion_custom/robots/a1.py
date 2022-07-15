@@ -245,8 +245,8 @@ class A1(minitaur.Minitaur):
 
     
     try:
-      controll_params = config["env"]["robot_controller"]
-      
+      controll_params = config["robot_controller"]
+
       abduction_p_gain = controll_params["abduction_p_gain"]
       abduction_d_gain = controll_params["abduction_d_gain"]
       hip_p_gain = controll_params["hip_p_gain"]
