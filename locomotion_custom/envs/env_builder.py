@@ -15,7 +15,9 @@
 """Utilities for building environments."""
 import sacred.utils
 from helper import generate_names
+import numpy as np
 import yaml
+import gym
 
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_env
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_config
@@ -30,10 +32,43 @@ from locomotion_simulation.locomotion_custom.robots import a1
 from locomotion_simulation.locomotion_custom.robots import laikago
 from locomotion_simulation.locomotion_custom.robots import robot_config
 
-
 from locomotion_simulation.locomotion_custom.envs.sensors import environment_sensors
 from locomotion_simulation.locomotion_custom.envs import custom_tasks
 from inspect import getmembers, isclass
+
+
+class ActionRestrain(gym.ActionWrapper):
+  # Current for POSITION only
+  def __init__(self, env, clip_num):
+    super().__init__(env)
+
+    self.base_angle = np.array(list(a1.INIT_MOTOR_ANGLES))
+    self.clip_num = clip_num
+    if isinstance(self.clip_num, list):
+      self.clip_num = np.array(self.clip_num)
+      assert len(clip_num) == np.prod(self.base_angle.shape)
+
+    self.ub = self.base_angle + self.clip_num
+    self.lb = self.base_angle - self.clip_num
+    self.action_space = gym.spaces.Box(self.lb, self.ub)
+
+  def action(self, action):
+    clipped_action = np.clip(action, self.lb, self.ub)
+    return clipped_action
+
+class DiagonalAction(gym.ActionWrapper):
+  def __init__(self, env):
+    super().__init__(env)
+    self.lb = np.split(self.env.action_space.low, 2)[0]
+    self.ub = np.split(self.env.action_space.high, 2)[0]
+    self.action_space = gym.spaces.Box(self.lb, self.ub)
+
+  def action(self, action):
+    right_act, left_act = np.split(action, 2)
+    act = np.concatenate(
+      [right_act, left_act, left_act, right_act]
+    )
+    return act
 
 
 def build_regular_env(robot_class,
@@ -121,8 +156,7 @@ def build_regular_env(robot_class,
 
     env = obs_dict_to_array_wrapper.ObservationDictionaryToArrayWrapper(
         env)
-    if (motor_control_mode
-        == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
+    if (motor_control_mode == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator and not env_config['action_restrain']:
         if robot_class == laikago.Laikago:
             env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
                 env,
@@ -133,4 +167,11 @@ def build_regular_env(robot_class,
                 env,
                 trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(
                     action_limit=action_limit))
+
+    if env_config['action_restrain']:
+        env = ActionRestrain(env, [0.05, 0.5, 0.5] * 4)
+
+    if env_config['diagonal_action']:
+        env = DiagonalAction(env)
+    
     return env
