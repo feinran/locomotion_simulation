@@ -23,7 +23,8 @@ from locomotion_simulation.locomotion_custom.envs import locomotion_gym_env
 from locomotion_simulation.locomotion_custom.envs import locomotion_gym_config
 from locomotion_simulation.locomotion_custom.envs import sensors
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
-    observation_dictionary_to_array_wrapper as obs_dict_to_array_wrapper
+    observation_dictionary_to_array_wrapper as obs_dict_to_array_wrapper, \
+    last_observations_history_wrapper
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import \
     trajectory_generator_wrapper_env
 from locomotion_simulation.locomotion_custom.envs.env_wrappers import simple_openloop
@@ -154,8 +155,11 @@ def build_regular_env(robot_class,
                                               task=task,
                                               config=env_config)
 
-    env = obs_dict_to_array_wrapper.ObservationDictionaryToArrayWrapper(
-        env)
+    env = obs_dict_to_array_wrapper.ObservationDictionaryToArrayWrapper(env)
+
+    if 'n_observations' in env_config and env_config['n_observations'] > 1:
+        env = last_observations_history_wrapper.LastObservationsHistoryWrapper(env, env_config['n_observations'])
+
     if (motor_control_mode == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator and not env_config['action_restrain']:
         if robot_class == laikago.Laikago:
             env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
