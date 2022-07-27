@@ -242,7 +242,8 @@ class A1(minitaur.Minitaur):
     self._allow_knee_contact = allow_knee_contact
     self._enable_clip_motor_commands = enable_clip_motor_commands
     self._nofoot_contacts = 0
-
+    
+    self.foot_contacts = [False, False, False, False]
     
     try:
       controll_params = config["robot_controller"]
@@ -348,7 +349,9 @@ class A1(minitaur.Minitaur):
       except ValueError:
         self._nofoot_contacts += 1
         continue
-
+    
+    self.foot_contacts = contacts
+    
     return contacts
 
   def ResetPose(self, add_constraint):

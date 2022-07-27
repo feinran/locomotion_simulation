@@ -23,7 +23,7 @@ import numpy as np
 from locomotion_simulation.locomotion_custom.envs.locomotion_gym_env import LocomotionGymEnv
 from locomotion_simulation.locomotion_custom.robots.a1 import LOWER_THRESHOLD_HIP, LOWER_THRESHOLD_UPPER, UPPER_THRESHOLD_HIP, UPPER_THRESHOLD_LOWER, UPPER_THRESHOLD_UPPER, LOWER_THRESHOLD_LOWER
 from scheduler import Scheduler
-from locomotion_simulation.locomotion_custom.envs.move_forward_task import MoveForwardTask
+from locomotion_simulation.locomotion_custom.envs.move_forward_task import MoveForwardTask, TwoStageTask
 
 class BaseTask():
     """Default task."""

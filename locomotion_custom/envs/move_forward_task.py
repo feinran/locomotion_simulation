@@ -19,6 +19,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import numpy as np
+from locomotion_simulation.locomotion_custom.envs.locomotion_gym_env import LocomotionGymEnv
+
+from locomotion_simulation.locomotion_custom.robots.a1 import INIT_MOTOR_ANGLES
 
 import os
 import inspect
@@ -260,3 +263,158 @@ class MoveForwardTask(object):
   @property
   def energy_reward(self):
       return self._energy_reward
+
+
+class TwoStageTask(MoveForwardTask):
+  def __init__(
+    self,
+    z_constrain=False,
+    move_forward_coeff=1,
+    other_direction_penalty=0, 
+    z_penalty=0,
+    orientation_penalty=0, 
+    time_step_s=0.01, 
+    num_action_repeat=10, 
+    height_fall_coeff=0.3, 
+    alive_reward=0.1, 
+    fall_reward=0, 
+    target_vel=None, 
+    check_contact=False, 
+    target_vel_dir=(1,0), 
+    subgoal_reward=None):
+    
+    super().__init__(
+        z_constrain, 
+        move_forward_coeff, 
+        other_direction_penalty, 
+        z_penalty, 
+        orientation_penalty, 
+        time_step_s, 
+        num_action_repeat, 
+        height_fall_coeff, 
+        alive_reward, 
+        fall_reward, 
+        target_vel, 
+        check_contact, 
+        target_vel_dir, 
+        subgoal_reward)
+    
+    self.env: LocomotionGymEnv = None
+    
+    self.intial_leg_postions = INIT_MOTOR_ANGLES
+    
+    self.leg_position_threshold = 0.05
+    self.orientation_threshold = 0.05
+    
+    self.leg_position_weight = -1 
+    self.orientaion_weigth = -1
+    
+    self.walking_task = True
+
+    self.walking_task_step_counter = 0
+    self.standing_up_task_counter = 0    
+
+    
+  def reset(self, env):
+    self.env = env
+    return super().reset(env)
+
+  def done(self, env):
+    """
+    function will be used to switch tasks
+    """
+    
+    # update env
+    self.env = env
+    
+    if self.walking_task and super().done(env=env):
+      # switch to stand up task if walking task would have ended
+      print("switched to standing up task")
+      self.walking_task = False
+    
+    elif not self.walking_task and self._calc_standing_up_task():
+      # check if standing up task has ended and switch back to walking task
+      print("switched to walking task")
+      self.walking_task = True
+    
+    return False
+
+  def reward(self, env):
+    """
+    Depending if the task is to move foreward or standing up again and go
+    into initial position the will be a specified reward
+    
+    """
+    if self.walking_task:
+      
+      self.walking_task_step_counter += 1
+      
+      move_foreward_reward = super().reward(env)
+      return move_foreward_reward
+    else:
+      
+      self.standing_up_task_counter += 1
+      
+      reset_reward = self._calc_reset_reward()
+      return reset_reward
+    
+  def _calc_standing_up_task(self):
+    """
+    getting back to walking task if the compined error is lower than a certain threshold
+    """
+    
+    orientation_error = super()._calc_reward_rotation()
+    leg_error = self._calc_reward_leg_position()
+    
+    if orientation_error <= self.orientation_threshold and leg_error <= self.leg_position_threshold:
+      return True
+    
+    return False
+
+  def _calc_reset_reward(self):
+    """
+    reward for going back into the robots initial position where it can start to start walking
+    """
+    orientation_reward = super()._calc_reward_rotation()
+
+    leg_position_reward = self._calc_reward_leg_position()
+    
+    # both weights has to negative because we want to minimize error-rates -> turning this into a maximization
+    return self.orientaion_weigth * orientation_reward + self.leg_position_weight * leg_position_reward
+
+  def _calc_reward_leg_position(self):
+    """
+    caculation MSE between current leg postions and goal leg positions to recreate the initial state
+    """
+
+    # create local variable for env
+    env = self._env
+
+    # get current motor angles
+    motor_angles = env.robot.GetTrueMotorAngles()
+
+    # compute MSE loss between goal leg angles and curent leg angles
+    leg_reward = np.mean(
+        (self.intial_leg_postions - motor_angles)**2
+    )
+
+    return leg_reward
+  
+  @property
+  def walking_percentage(self):
+    """How long was the robot trying to learn the walking task
+
+    Returns:
+        float: percentage of walking task
+    """
+    return self.walking_task_step_counter / self.env.current_rollout_step
+  
+  @property
+  def standing_up_percentage(self):
+    """How long was the robot trying to learn the standing up task
+
+    Returns:
+        float: percentage of standing up task
+    """
+    return self.standing_up_task_counter / self.env.current_rollout_step
+  

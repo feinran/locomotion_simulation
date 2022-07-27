@@ -30,6 +30,7 @@ from scipy.spatial.transform import Rotation
 from locomotion_simulation.locomotion_custom.robots import robot_config
 from locomotion_simulation.locomotion_custom.envs.sensors import sensor
 from locomotion_simulation.locomotion_custom.envs.sensors import space_utils
+from locomotion_simulation.locomotion_custom.robots.a1 import A1 
 
 _ACTION_EPS = 0.01
 _NUM_SIMULATION_ITERATION_STEPS = 300
@@ -423,7 +424,7 @@ class LocomotionGymEnv(gym.Env):
         self._env_step_counter += 1
         if done:
             self._robot.Terminate()
-            
+                
         return self._get_observation(), reward, done, {}
 
     def render(self, mode='rgb_array'):
@@ -604,7 +605,7 @@ class LocomotionGymEnv(gym.Env):
         return self._pybullet_client
 
     @property
-    def robot(self):
+    def robot(self) -> A1:
         return self._robot
     
     @property
