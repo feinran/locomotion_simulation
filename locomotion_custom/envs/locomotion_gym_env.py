@@ -163,6 +163,9 @@ class LocomotionGymEnv(gym.Env):
         self._l_align = 0
         self._l_speed = 0
 
+        # used to calculate mean_velocity
+        self._velocities = []
+
     def _build_action_space(self):
         """Builds action space based on motor control mode."""
         motor_mode = self._gym_config.simulation_parameters.motor_control_mode
@@ -419,6 +422,7 @@ class LocomotionGymEnv(gym.Env):
         self._reward_acc += reward
         self._energy_acc += self._robot.GetEnergyConsumptionPerControlStep()
         self._current_rollout_step += 1
+        self._velocities.append(np.linalg.norm(self._robot.GetBaseVelocity()))
 
         done = self._termination()
         self._env_step_counter += 1
@@ -672,6 +676,12 @@ class LocomotionGymEnv(gym.Env):
     @property
     def distance_from_origin(self):
         return np.linalg.norm(np.array(self._robot.GetBasePosition()) - np.array(self._init_robot_position))
+
+    @property
+    def mean_velocity(self):
+        mean = np.mean(self._velocities)
+        self._velocities = []
+        return mean
     
     @property
     def l_move(self):
