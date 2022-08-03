@@ -233,7 +233,8 @@ class DirectionTask(BaseTask):
                 self._w_align * alignment_reward + \
                 self._w_energy * energy_reward + \
                 self._w_alive
-    
+
+
     @property
     def move_reward(self):
         return self._move_dot
@@ -259,6 +260,7 @@ class DirectionSpeedTask(BaseTask):
     """Returns reward depending on the direction"""
     def __init__(self, 
                  energy_enable: bool = False,
+                 contact_enable: bool = False,
                  similarity_func_name: str = "dot", 
                  l_move: float = 0.6, 
                  l_align: float = 0.6, 
@@ -273,8 +275,10 @@ class DirectionSpeedTask(BaseTask):
                  w_align: float = 1,
                  w_speed: float = 1,
                  w_energy: float = 1,
+                 w_contact_reward: float = 0,
                  w_motor_limit_penalty: float = 0,
                  w_nofoot_contacts_penalty: float = 0,
+                 w_z_speed_penalty: float = 0,
                  w_alive: float = 0,
                  motor_limit_epsilon: float = -0.001):
         super().__init__()
@@ -285,8 +289,10 @@ class DirectionSpeedTask(BaseTask):
         self._w_align = float(w_align)
         self._w_speed = float(w_speed)
         self._w_energy = float(w_energy)
+        self._w_contact_reward = float(w_contact_reward)
         self._w_motor_limit_penalty = -float(w_motor_limit_penalty)
         self._w_nofoot_contacts_penalty = -float(w_nofoot_contacts_penalty)
+        self._w_z_speed_penalty = -float(w_z_speed_penalty)
         self._w_alive = float(w_alive)
         
         # log data
@@ -295,9 +301,13 @@ class DirectionSpeedTask(BaseTask):
         self._speed_reward = 0
         self._energy = 0
         
-        # additional energy option
+        # additional options
         self._energy_enable = energy_enable
-        
+        self._contact_enable = contact_enable
+
+        # this stores the last evaluation of done(...)
+        self._done = False
+
         history_length = 15
         self._l_move_scheduler = Scheduler(len_history=history_length,
                                             value_init=l_move,
@@ -399,6 +409,7 @@ class DirectionSpeedTask(BaseTask):
         global_velocity = np.array(env.robot.GetBaseVelocity())
         local_velocity = np.matmul(rot_mat, global_velocity)[:-1]
         local_movement_dir = local_velocity / np.linalg.norm(local_velocity)
+        z_speed = global_velocity[-1]
         
         # compute rewards
         movement_dot = self.similarity_func(dir, local_movement_dir, self._l_move_scheduler.value)
@@ -417,13 +428,41 @@ class DirectionSpeedTask(BaseTask):
         self._l_align_scheduler.update(last_performace=alignment_dot)
         self._l_speed_scheduler.update(last_performace=speed_reward)
         
-        return self._w_move * movement_dot + \
+
+        reward = self._w_move * movement_dot + \
                 self._w_align * alignment_dot + \
                 self._w_speed * speed_reward + \
                 self._w_energy * energy_reward + \
                 self._w_motor_limit_penalty * all_motor_violations + \
                 self._w_nofoot_contacts_penalty * nofoot_contacts + \
+                self._w_z_speed_penalty * (z_speed ** 2) + \
                 self._w_alive
+
+        if self._done:
+            reward += self._w_contact_reward
+        
+        return reward
+
+    # the done condition based on Mehooz/vision4leg
+    def done(self, env):
+        if self._contact_enable:
+            speed = np.linalg.norm(env.robot.GetBaseVelocity())
+
+            if speed > 0.05:
+                self._done = super().done(env)
+                return self._done
+
+            contacts = env._pybullet_client.getContactPoints(
+                bodyA=env.robot.quadruped)
+            for contact in contacts:
+                if contact[2] is env._world_dict["ground"]:
+                    if contact[3] not in env.robot._foot_link_ids:
+                        self._done = True
+                        return True
+
+        self._done = super().done(env)
+        return self._done
+
     
     @property
     def move_reward(self):
